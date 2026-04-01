@@ -1,4 +1,7 @@
+[build]
+buildCommand = "cd backend && npm ci --include=dev && npm run build"
+
 [deploy]
-startCommand = "node backend/dist/index.js"
+startCommand = "cd backend && npx prisma migrate deploy && node dist/index.js"
 healthcheckPath = "/api/health"
-healthcheckTimeout = 30
+healthcheckTimeout = 60
