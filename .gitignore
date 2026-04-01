@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+uploads/videos/*
+uploads/images/*
+!uploads/videos/.gitkeep
+!uploads/images/.gitkeep
+*.log
+.DS_Store
+.vscode/

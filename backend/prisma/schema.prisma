@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  name      String
+  role      AdminRole @default(MANAGER)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("admins")
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  MANAGER
+}
+
+model Product {
+  id               String          @id @default(uuid())
+  slug             String          @unique
+  name             String
+  description      String          @db.Text
+  shortDesc        String
+  price            Decimal         @db.Decimal(10, 2)
+  priceWholesale   Decimal?        @db.Decimal(10, 2)
+  wholesaleMinQty  Int             @default(1)
+  weight           Float
+  sku              String          @unique
+  inStock          Boolean         @default(true)
+  featured         Boolean         @default(false)
+  images           String[]
+  category         ProductCategory
+  specs            Json
+  sortOrder        Int             @default(0)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  orderItems       OrderItem[]
+
+  @@map("products")
+}
+
+enum ProductCategory {
+  BRIQUETTES
+  FIRESTARTERS
+  ACCESSORIES
+}
+
+model Order {
+  id                String            @id @default(uuid())
+  orderNumber       String            @unique
+  status            OrderStatus       @default(PENDING)
+  paymentMethod     PaymentMethod
+
+  name              String
+  phone             String
+  email             String?
+  establishment     String
+  establishmentType EstablishmentType
+  city              String
+  comment           String?           @db.Text
+
+  inn               String?
+  organizationName  String?
+  directorName      String?
+  legalAddress      String?
+
+  subtotal          Decimal           @db.Decimal(10, 2)
+  discountAmount    Decimal           @default(0) @db.Decimal(10, 2)
+  totalAmount       Decimal           @db.Decimal(10, 2)
+
+  ipAddress         String?
+  userAgent         String?
+  source            String?
+
+  items             OrderItem[]
+  payment           Payment?
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([phone])
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  PENDING_PAYMENT
+  PAID
+  AWAITING_INVOICE
+  INVOICE_SENT
+  CONFIRMED
+  IN_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  ONLINE
+  INVOICE
+}
+
+enum EstablishmentType {
+  RESTAURANT
+  CAFE
+  SHAWARMA
+  DELIVERY
+  OTHER
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2)
+  subtotal  Decimal @db.Decimal(10, 2)
+
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  orderId         String        @unique
+  yookassaId      String?       @unique
+  status          PaymentStatus @default(PENDING)
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("RUB")
+  confirmationUrl String?
+  paidAt          DateTime?
+  metadata        Json?
+
+  order           Order         @relation(fields: [orderId], references: [id])
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  WAITING_FOR_CAPTURE
+  SUCCEEDED
+  CANCELLED
+  REFUNDED
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  name        String
+  position    String
+  company     String
+  city        String
+  rating      Int      @default(5)
+  text        String   @db.Text
+  photo       String?
+  published   Boolean  @default(false)
+  featured    Boolean  @default(false)
+  verified    Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, featured])
+  @@map("reviews")
+}
+
+model Setting {
+  key       String      @id
+  value     String      @db.Text
+  type      SettingType @default(STRING)
+  label     String
+  group     String      @default("general")
+  updatedAt DateTime    @updatedAt
+
+  @@map("settings")
+}
+
+enum SettingType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+  TEXT
+  URL
+}
+
+model Contact {
+  id        String        @id @default(uuid())
+  name      String
+  phone     String
+  email     String?
+  message   String?       @db.Text
+  source    String?
+  status    ContactStatus @default(NEW)
+  ipAddress String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@map("contacts")
+}
+
+enum ContactStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
+  SPAM
+}
