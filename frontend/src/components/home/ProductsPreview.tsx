@@ -113,38 +113,38 @@ export default function ProductsPreview() {
             : `опт от ${Math.round(Number(p.priceWholesale))} ₽`
           : 'опт по запросу'
 
-      const features =
+      const iconList = [Clock, Thermometer, Package]
+      const specEntries = Object.entries(specs || {})
+        .filter(([, v]) => v != null && String(v).trim() !== '')
+        .slice(0, 3)
+
+      const fallbackFeatures =
         category === 'briquettes'
           ? [
-              { icon: Clock, text: getSpecsValue(specs, 'Время горения', 'До 8 часов горения') },
-              { icon: Thermometer, text: getSpecsValue(specs, 'Температура', '900°C температура') },
-              {
-                icon: Package,
-                text:
-                  getSpecsValue(specs, 'Без дыма и запаха', '').trim()
-                    || getSpecsValue(specs, 'Без дыма и золы', '').trim()
-                    || 'Без дыма и запаха',
-              },
+              { icon: Clock, text: 'До 8 часов горения' },
+              { icon: Thermometer, text: '900°C температура' },
+              { icon: Package, text: 'Без дыма и запаха' },
             ]
           : [
-              { icon: Clock, text: getSpecsValue(specs, 'Время горения', '10 минут горения') },
-              { icon: Thermometer, text: getSpecsValue(specs, 'Без химии', 'Без химии') },
-              {
-                icon: Package,
-                text:
-                  getSpecsValue(specs, 'Розжиг', '').trim()
-                    || getSpecsValue(specs, 'Розжиг за 5 минут', '').trim()
-                    || getSpecsValue(specs, 'Розжиг за 5-7 минут', '').trim()
-                    || 'Розжиг за 5-7 минут',
-              },
+              { icon: Clock, text: '10 минут горения' },
+              { icon: Thermometer, text: 'Без химии' },
+              { icon: Package, text: 'Розжиг за 5-7 минут' },
             ]
+
+      const features =
+        specEntries.length > 0
+          ? specEntries.map(([, v], i) => ({
+              icon: iconList[i % iconList.length],
+              text: String(v).trim(),
+            }))
+          : fallbackFeatures
 
       const gradient = category === 'briquettes' ? 'from-brand-orange/20 to-transparent' : 'from-green-500/10 to-transparent'
 
       return {
         id: p.id,
         kind: category,
-        name: p.category === 'BRIQUETTES' ? 'Угольные брикеты Pini Kay' : 'Парафиновый розжиг',
+        name: p.name,
         subtitle,
         price: priceText,
         priceWholesale,

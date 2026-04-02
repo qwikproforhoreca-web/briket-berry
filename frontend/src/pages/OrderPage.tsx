@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -8,20 +8,9 @@ import { useNavigate } from 'react-router-dom'
 import { Check, CreditCard, FileText, Phone, Building2, User, MessageSquare, ChevronRight, ChevronLeft, ShoppingCart } from 'lucide-react'
 import clsx from 'clsx'
 import axios from 'axios'
-
-const PRICES = {
-  piniKay10kg: 890,
-  firestarters8: 120,
-}
-
-const WHOLESALE_RULES = [
-  { product: 'piniKay10kg', minQty: 20, discount: 0.1, price: 750 },
-  { product: 'firestarters8', minQty: 50, discount: 0.3, price: 84 },
-]
+import { useQuery } from '@tanstack/react-query'
 
 const orderSchema = z.object({
-  piniKay10kg: z.coerce.number().min(0).max(9999),
-  firestarters8: z.coerce.number().min(0).max(9999),
   paymentMethod: z.enum(['online', 'invoice']),
   name: z.string().min(2, 'Минимум 2 символа').max(50),
   phone: z.string().min(10, 'Введите номер телефона').max(20),
@@ -38,31 +27,24 @@ const orderSchema = z.object({
 
 type FormData = z.infer<typeof orderSchema>
 
-function calcTotal(data: Partial<FormData>) {
-  let subtotal = 0
-  let discount = 0
-
-  const items = [
-    { key: 'piniKay10kg' as const, price: PRICES.piniKay10kg },
-    { key: 'firestarters8' as const, price: PRICES.firestarters8 },
-  ]
-
-  for (const item of items) {
-    const qty = (data[item.key] as number) || 0
-    if (!qty) continue
-    const rule = WHOLESALE_RULES.find(r => r.product === item.key)
-    let unitPrice = item.price
-    if (rule && qty >= rule.minQty) {
-      unitPrice = rule.price
-      discount += (item.price - rule.price) * qty
-    }
-    subtotal += unitPrice * qty
-  }
-
-  return { subtotal: subtotal + discount, discount, total: subtotal }
+type Product = {
+  id: string
+  sku: string
+  name: string
+  price: number | string
+  priceWholesale?: number | string | null
+  wholesaleMinQty?: number
+  weight?: number
 }
 
 const steps = ['Товары', 'Оплата', 'Контакты']
+const MAX_QTY = 9999
+const INPUT_DEBOUNCE_MS = 180
+
+const clampQty = (value: number) => {
+  if (!Number.isFinite(value)) return 0
+  return Math.min(MAX_QTY, Math.max(0, Math.floor(value)))
+}
 
 export default function OrderPage() {
   const [step, setStep] = useState(0)
@@ -72,22 +54,91 @@ export default function OrderPage() {
   const { register, handleSubmit, watch, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(orderSchema),
     defaultValues: {
-      piniKay10kg: 0,
-      firestarters8: 0,
       paymentMethod: 'online',
       establishmentType: 'RESTAURANT',
     },
   })
 
+  const { data: productsData } = useQuery({
+    queryKey: ['products-for-order'],
+    queryFn: () => axios.get('/api/v1/products').then((r) => r.data.data),
+  })
+
+  const products: Product[] = Array.isArray(productsData) ? productsData : []
+  const [quantities, setQuantities] = useState<Record<string, number>>({})
+  const [draftQuantities, setDraftQuantities] = useState<Record<string, string>>({})
+  const timersRef = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({})
+
+  useEffect(() => {
+    return () => {
+      Object.values(timersRef.current).forEach((timer) => {
+        if (timer) clearTimeout(timer)
+      })
+    }
+  }, [])
+
+  const commitQuantityDebounced = (productId: string, qty: number) => {
+    const oldTimer = timersRef.current[productId]
+    if (oldTimer) clearTimeout(oldTimer)
+    timersRef.current[productId] = setTimeout(() => {
+      const normalized = clampQty(qty)
+      setQuantities((prev) => ({ ...prev, [productId]: normalized }))
+      setDraftQuantities((prev) => ({ ...prev, [productId]: String(normalized) }))
+    }, INPUT_DEBOUNCE_MS)
+  }
+
+  const commitQuantityNow = (productId: string, qty: number) => {
+    const normalized = clampQty(qty)
+    const oldTimer = timersRef.current[productId]
+    if (oldTimer) clearTimeout(oldTimer)
+    setQuantities((prev) => ({ ...prev, [productId]: normalized }))
+    setDraftQuantities((prev) => ({ ...prev, [productId]: String(normalized) }))
+  }
+
+  const calc = products.reduce(
+    (acc, product) => {
+      const qty = quantities[product.id] || 0
+      if (!qty) return acc
+
+      const regular = Number(product.price || 0)
+      const wholesale = product.priceWholesale != null ? Number(product.priceWholesale) : regular
+      const wholesaleMin = Number(product.wholesaleMinQty || 1)
+      const unitPrice = qty >= wholesaleMin ? wholesale : regular
+
+      acc.subtotal += regular * qty
+      acc.discount += (regular - unitPrice) * qty
+      acc.total += unitPrice * qty
+      return acc
+    },
+    { subtotal: 0, discount: 0, total: 0 }
+  )
+
   const formValues = watch()
-  const { discount, total } = calcTotal(formValues)
+  const { discount, total } = calc
   const hasItems = total > 0
 
   const onSubmit = async (data: FormData) => {
     if (data.website) return // honeypot
     setIsSubmitting(true)
     try {
-      const res = await axios.post('/api/v1/orders', data)
+      const items = products
+        .map((p) => ({ productId: p.id, sku: p.sku, quantity: quantities[p.id] || 0 }))
+        .filter((i) => i.quantity > 0)
+
+      // Backward-compatible payload for servers that still use legacy fields.
+      const legacyPiniKayQty = products
+        .filter((p) => String(p.sku).toUpperCase() === 'PKB-10')
+        .reduce((sum, p) => sum + (quantities[p.id] || 0), 0)
+      const legacyFirestartersQty = products
+        .filter((p) => String(p.sku).toUpperCase() === 'PFR-8')
+        .reduce((sum, p) => sum + (quantities[p.id] || 0), 0)
+
+      const res = await axios.post('/api/v1/orders', {
+        ...data,
+        items,
+        piniKay10kg: legacyPiniKayQty,
+        firestarters8: legacyFirestartersQty,
+      })
       if (data.paymentMethod === 'online' && res.data.data.paymentUrl) {
         window.location.href = res.data.data.paymentUrl
       } else {
@@ -174,41 +225,77 @@ export default function OrderPage() {
                           Выберите продукты
                         </h2>
 
-                        {[
-                          { field: 'piniKay10kg' as const, name: 'Pini Kay Брикеты 10 кг', price: PRICES.piniKay10kg, wholesale: '750 ₽/шт от 20' },
-                          { field: 'firestarters8' as const, name: 'Парафиновый розжиг 8 кубиков', price: PRICES.firestarters8, wholesale: '84 ₽/уп от 50' },
-                        ].map((item) => (
-                          <div key={item.field} className="flex items-center gap-4 p-4 bg-[#111111] rounded-xl border border-white/5">
+                        {products.map((item) => {
+                          const qty = quantities[item.id] || 0
+                          const draftRaw = draftQuantities[item.id]
+                          const isOverLimit = typeof draftRaw === 'string' && draftRaw.length > 0 && Number(draftRaw) > MAX_QTY
+                          const regular = Number(item.price || 0)
+                          const wholesale = item.priceWholesale != null ? Number(item.priceWholesale) : regular
+                          const wholesaleMin = Number(item.wholesaleMinQty || 1)
+                          const wholesaleLabel = `${wholesale.toLocaleString('ru')} ₽/шт от ${wholesaleMin}`
+                          return (
+                          <div key={item.id} className="flex items-center gap-4 p-4 bg-[#111111] rounded-xl border border-white/5">
                             <div className="flex-1">
                               <div className="text-white font-medium text-sm">{item.name}</div>
-                              <div className="text-white/30 text-xs">{item.price} ₽/шт · Опт: {item.wholesale}</div>
+                              <div className="text-white/30 text-xs">{regular.toLocaleString('ru')} ₽/шт · Опт: {wholesaleLabel}</div>
                             </div>
                             <div className="flex items-center gap-2">
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const cur = formValues[item.field] as number || 0
-                                  if (cur > 0) register(item.field).onChange({ target: { value: cur - 1 } })
+                                  const current = quantities[item.id] || 0
+                                  commitQuantityNow(item.id, current - 1)
                                 }}
                                 className="w-8 h-8 rounded-lg bg-white/5 text-white hover:bg-white/10 transition-colors flex items-center justify-center text-lg font-bold"
                               >−</button>
                               <input
-                                {...register(item.field)}
                                 type="number"
                                 min="0"
-                                className="w-16 text-center bg-transparent text-white font-semibold text-sm focus:outline-none border border-white/10 rounded-lg py-1.5"
+                                max={MAX_QTY}
+                                value={draftQuantities[item.id] ?? String(qty)}
+                                onChange={(e) => {
+                                  const onlyDigits = e.target.value.replace(/[^\d]/g, '')
+                                  setDraftQuantities((prev) => ({ ...prev, [item.id]: onlyDigits }))
+                                  const next = clampQty(Number(onlyDigits || 0))
+                                  commitQuantityDebounced(item.id, next)
+                                }}
+                                onBlur={() => {
+                                  const raw = draftQuantities[item.id] ?? String(qty)
+                                  commitQuantityNow(item.id, Number(raw || 0))
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key !== 'Enter') return
+                                  e.preventDefault()
+                                  const raw = draftQuantities[item.id] ?? String(qty)
+                                  commitQuantityNow(item.id, Number(raw || 0))
+                                }}
+                                className={clsx(
+                                  'w-16 text-center bg-transparent text-white font-semibold text-sm focus:outline-none border rounded-lg py-1.5 transition-colors',
+                                  isOverLimit
+                                    ? 'border-amber-400/80 shadow-[0_0_0_1px_rgba(251,191,36,0.25)]'
+                                    : 'border-white/10'
+                                )}
                               />
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const cur = formValues[item.field] as number || 0
-                                  register(item.field).onChange({ target: { value: cur + 1 } })
+                                  const current = quantities[item.id] || 0
+                                  commitQuantityNow(item.id, current + 1)
                                 }}
                                 className="w-8 h-8 rounded-lg bg-white/5 text-white hover:bg-brand-orange/20 hover:text-brand-orange transition-colors flex items-center justify-center text-lg font-bold"
                               >+</button>
                             </div>
+                            {isOverLimit && (
+                              <p className="text-amber-300/90 text-[11px] leading-tight ml-2">
+                                Максимум: {MAX_QTY}. Значение будет автоматически ограничено.
+                              </p>
+                            )}
                           </div>
-                        ))}
+                        )})}
+
+                        <p className="text-white/35 text-xs -mt-2">
+                          Количество для каждого товара: от 0 до {MAX_QTY}.
+                        </p>
 
                         {!hasItems && (
                           <p className="text-red-400/80 text-sm text-center py-2">Выберите хотя бы один товар</p>
@@ -443,16 +530,15 @@ export default function OrderPage() {
                   <div className="card p-6 sticky top-24">
                     <h3 className="font-semibold text-white mb-4">Ваш заказ</h3>
 
-                    {[
-                      { key: 'piniKay10kg' as const, name: 'Pini Kay 10 кг', price: PRICES.piniKay10kg },
-                      { key: 'firestarters8' as const, name: 'Розжиг 8 кубиков', price: PRICES.firestarters8 },
-                    ].map((item) => {
-                      const qty = (formValues[item.key] as number) || 0
+                    {products.map((item) => {
+                      const qty = quantities[item.id] || 0
                       if (!qty) return null
-                      const rule = WHOLESALE_RULES.find(r => r.product === item.key)
-                      const unitPrice = rule && qty >= rule.minQty ? rule.price : item.price
+                      const regular = Number(item.price || 0)
+                      const wholesale = item.priceWholesale != null ? Number(item.priceWholesale) : regular
+                      const wholesaleMin = Number(item.wholesaleMinQty || 1)
+                      const unitPrice = qty >= wholesaleMin ? wholesale : regular
                       return (
-                        <div key={item.key} className="flex justify-between py-2 border-b border-white/5 text-sm">
+                        <div key={item.id} className="flex justify-between py-2 border-b border-white/5 text-sm">
                           <div>
                             <div className="text-white">{item.name}</div>
                             <div className="text-white/30 text-xs">{qty} шт × {unitPrice} ₽</div>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight, X, ChevronUp, ChevronDown } from 'lucide-react'
 
 interface Product {
   id: string
@@ -17,6 +17,12 @@ interface Product {
   featured?: boolean
   inStock: boolean
   images?: string[]
+  sortOrder?: number
+}
+
+interface SpecRow {
+  key: string
+  value: string
 }
 
 export default function AdminProductsPage() {
@@ -33,16 +39,12 @@ export default function AdminProductsPage() {
   const [formWeight, setFormWeight] = useState('')
   const [formDescription, setFormDescription] = useState('')
   const [formShortDesc, setFormShortDesc] = useState('')
-  // Quick specs for homepage cards (stored in `specs` JSON)
-  const [specTime, setSpecTime] = useState('')
-  const [specTemp, setSpecTemp] = useState('')
-  const [specNoSmoke, setSpecNoSmoke] = useState('')
-  const [specNoChem, setSpecNoChem] = useState('')
-  const [specStarter, setSpecStarter] = useState('')
+  const [formSpecs, setFormSpecs] = useState<SpecRow[]>([])
   const [formFeatured, setFormFeatured] = useState(false)
   const [formImageFiles, setFormImageFiles] = useState<File[]>([])
   const [formExistingImages, setFormExistingImages] = useState<string[]>([])
   const [isUploadingImages, setIsUploadingImages] = useState(false)
+  const [isReordering, setIsReordering] = useState(false)
 
   const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || ''
   const resolveImageUrl = (url?: string) => {
@@ -114,24 +116,10 @@ export default function AdminProductsPage() {
   }, [formImageFiles])
 
   useEffect(() => {
-    // Release object URLs to avoid memory leaks
     return () => {
       previewUrls.forEach((url) => URL.revokeObjectURL(url))
     }
   }, [previewUrls])
-
-  useEffect(() => {
-    // Defaults for homepage-card characteristics
-    if (formCategory === 'BRIQUETTES') {
-      setSpecTime('До 8 часов горения')
-      setSpecTemp('900°C температура')
-      setSpecNoSmoke('Без дыма и запаха')
-    } else {
-      setSpecTime('10 минут горения')
-      setSpecNoChem('Без химии')
-      setSpecStarter('Розжиг за 5-7 минут')
-    }
-  }, [formCategory])
 
   function resetForm() {
     setShowForm(false)
@@ -145,11 +133,7 @@ export default function AdminProductsPage() {
     setFormWeight('')
     setFormDescription('')
     setFormShortDesc('')
-    setSpecTime('')
-    setSpecTemp('')
-    setSpecNoSmoke('')
-    setSpecNoChem('')
-    setSpecStarter('')
+    setFormSpecs([])
     setFormFeatured(false)
     setFormImageFiles([])
     setFormExistingImages([])
@@ -159,7 +143,6 @@ export default function AdminProductsPage() {
   async function uploadImages(files: File[]) {
     if (!files.length) return []
     const urls: string[] = []
-
     for (const file of files) {
       const fd = new FormData()
       fd.append('image', file)
@@ -169,7 +152,6 @@ export default function AdminProductsPage() {
       })
       urls.push(String(res.data?.data?.absoluteUrl || res.data?.data?.url || ''))
     }
-
     return urls.filter(Boolean)
   }
 
@@ -195,26 +177,16 @@ export default function AdminProductsPage() {
         formShortDesc.trim() ||
         (formDescription.trim() ? formDescription.trim().slice(0, 140) : '')
 
-      // Avoid sending invalid payloads to Prisma
       if (!formName.trim() || !formSku.trim() || !Number.isFinite(price) || !shortDesc) {
         setServerError('Заполни обязательные поля: Название, SKU, Цена и Описание/Короткое описание')
         return
       }
 
+      // Build specs object from free-form rows
       const specs: Record<string, string> = {}
-      if (formCategory === 'BRIQUETTES') {
-        specs['Время горения'] = specTime.trim() || 'До 8 часов горения'
-        specs['Температура'] = specTemp.trim() || '900°C температура'
-        // Home expects one of these keys (we store both to be safe).
-        const noSmokeValue = specNoSmoke.trim() || 'Без дыма и запаха'
-        specs['Без дыма и запаха'] = noSmokeValue
-        specs['Без дыма и золы'] = noSmokeValue
-      } else {
-        specs['Время горения'] = specTime.trim() || '10 минут горения'
-        specs['Без химии'] = specNoChem.trim() || 'Без химии'
-        specs['Розжиг'] = specStarter.trim() || 'Розжиг за 5-7 минут'
-        specs['Розжиг за 5 минут'] = specStarter.trim() || 'Розжиг за 5-7 минут'
-        specs['Розжиг за 5-7 минут'] = specStarter.trim() || 'Розжиг за 5-7 минут'
+      for (const { key, value } of formSpecs) {
+        const k = key.trim()
+        if (k) specs[k] = value.trim()
       }
 
       const payload = {
@@ -222,7 +194,6 @@ export default function AdminProductsPage() {
         slug: toSlug(formName),
         sku: formSku.trim(),
         price,
-        // Optional field: if empty - omit so Prisma keeps NULL
         ...(typeof wholesalePriceRaw === 'number' ? { priceWholesale: wholesalePriceRaw } : {}),
         category: formCategory,
         weight: Number(formWeight) || 0,
@@ -263,17 +234,59 @@ export default function AdminProductsPage() {
     setFormImageFiles([])
     setFormExistingImages(Array.isArray(product.images) ? product.images : [])
 
-    const specs = product.specs || {}
-    setSpecTime(String(specs['Время горения'] || ''))
-    setSpecTemp(String(specs['Температура'] || ''))
-    setSpecNoSmoke(String(specs['Без дыма и запаха'] || specs['Без дыма и золы'] || ''))
-    setSpecNoChem(String(specs['Без химии'] || ''))
-    setSpecStarter(String(specs['Розжиг'] || specs['Розжиг за 5 минут'] || specs['Розжиг за 5-7 минут'] || ''))
+    // Load specs as free-form key-value rows
+    const entries = Object.entries(product.specs || {}).map(([key, value]) => ({
+      key,
+      value: String(value || ''),
+    }))
+    setFormSpecs(entries)
   }
 
-  const products = data || []
+  function addSpecRow() {
+    setFormSpecs(prev => [...prev, { key: '', value: '' }])
+  }
+
+  function removeSpecRow(index: number) {
+    setFormSpecs(prev => prev.filter((_, i) => i !== index))
+  }
+
+  function updateSpecRow(index: number, field: 'key' | 'value', newValue: string) {
+    setFormSpecs(prev => {
+      const next = [...prev]
+      next[index] = { ...next[index], [field]: newValue }
+      return next
+    })
+  }
+
+  async function handleReorder(productId: string, direction: 'up' | 'down') {
+    const list: Product[] = products
+    const idx = list.findIndex(p => p.id === productId)
+    if (idx === -1) return
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= list.length) return
+
+    const a = list[idx]
+    const b = list[swapIdx]
+    const aOrder = a.sortOrder ?? idx
+    const bOrder = b.sortOrder ?? swapIdx
+
+    setIsReordering(true)
+    try {
+      await Promise.all([
+        axios.put(`/api/v1/products/${a.id}`, { sortOrder: bOrder }, { withCredentials: true }),
+        axios.put(`/api/v1/products/${b.id}`, { sortOrder: aOrder }, { withCredentials: true }),
+      ])
+      await queryClient.invalidateQueries({ queryKey: ['admin-products'] })
+    } finally {
+      setIsReordering(false)
+    }
+  }
+
+  const products: Product[] = data || []
   const productsCount = products.length
   const canCreateMore = productsCount < 30
+
+  const inputCls = 'w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20'
 
   return (
     <div className="space-y-5">
@@ -329,131 +342,96 @@ export default function AdminProductsPage() {
               <X className="w-4 h-4" />
             </button>
           </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-white/40 text-xs">Название</label>
-              <input value={formName} onChange={(e) => setFormName(e.target.value)} required
-                className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20" placeholder="Брикеты Premium" />
+              <input value={formName} onChange={(e) => setFormName(e.target.value)} required className={inputCls} placeholder="Брикеты Premium" />
             </div>
             <div className="space-y-1.5">
               <label className="text-white/40 text-xs">SKU</label>
-              <input value={formSku} onChange={(e) => setFormSku(e.target.value)} required
-                className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20" placeholder="BRQ-001" />
+              <input value={formSku} onChange={(e) => setFormSku(e.target.value)} required className={inputCls} placeholder="BRQ-001" />
             </div>
             <div className="space-y-1.5">
               <label className="text-white/40 text-xs">Цена (₽)</label>
-              <input type="number" value={formPrice} onChange={(e) => setFormPrice(e.target.value)} required
-                className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20" placeholder="1500" />
+              <input type="number" value={formPrice} onChange={(e) => setFormPrice(e.target.value)} required className={inputCls} placeholder="1500" />
             </div>
             <div className="space-y-1.5">
               <label className="text-white/40 text-xs">Оптовая цена (₽)</label>
-              <input type="number" value={formWholesalePrice} onChange={(e) => setFormWholesalePrice(e.target.value)}
-                className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20" placeholder="1200" />
+              <input type="number" value={formWholesalePrice} onChange={(e) => setFormWholesalePrice(e.target.value)} className={inputCls} placeholder="1200" />
             </div>
             <div className="space-y-1.5">
               <label className="text-white/40 text-xs">Категория</label>
-              <select value={formCategory} onChange={(e) => setFormCategory(e.target.value)}
-                className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/20">
+              <select value={formCategory} onChange={(e) => setFormCategory(e.target.value as 'BRIQUETTES' | 'FIRESTARTERS')} className={inputCls}>
                 <option value="BRIQUETTES">Брикеты</option>
                 <option value="FIRESTARTERS">Разжигатели</option>
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-white/40 text-xs">Вес</label>
-              <input value={formWeight} onChange={(e) => setFormWeight(e.target.value)}
-                className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20" placeholder="10 кг" />
+              <label className="text-white/40 text-xs">Вес / фасовка</label>
+              <input value={formWeight} onChange={(e) => setFormWeight(e.target.value)} className={inputCls} placeholder="10 кг" />
             </div>
           </div>
+
           <div className="space-y-1.5">
             <label className="text-white/40 text-xs">Описание</label>
             <textarea value={formDescription} onChange={(e) => setFormDescription(e.target.value)} rows={3}
-              className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20 resize-none" placeholder="Описание продукта..." />
+              className={`${inputCls} resize-none`} placeholder="Описание продукта..." />
           </div>
+
           <div className="space-y-1.5">
             <label className="text-white/40 text-xs">Короткое описание (карточка)</label>
-            <input
-              value={formShortDesc}
-              onChange={(e) => setFormShortDesc(e.target.value)}
-              className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20"
-              placeholder="Например: профессиональные брикеты Pini Kay для ресторанов"
-            />
+            <input value={formShortDesc} onChange={(e) => setFormShortDesc(e.target.value)} className={inputCls}
+              placeholder="Например: профессиональные брикеты Pini Kay для ресторанов" />
           </div>
 
           <label className="flex items-center gap-2 text-white/70 text-sm">
-            <input
-              type="checkbox"
-              checked={formFeatured}
-              onChange={(e) => setFormFeatured(e.target.checked)}
-              className="accent-[#FF6B35]"
-            />
+            <input type="checkbox" checked={formFeatured} onChange={(e) => setFormFeatured(e.target.checked)} className="accent-[#FF6B35]" />
             Показывать как основной (featured)
           </label>
 
-          <div className="space-y-1.5">
-            <label className="text-white/40 text-xs">
-              Характеристики (для главной карточки)
-            </label>
-            {formCategory === 'BRIQUETTES' ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-white/40 text-xs">Время горения</label>
-                  <input
-                    value={specTime}
-                    onChange={(e) => setSpecTime(e.target.value)}
-                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20"
-                    placeholder="До 8 часов горения"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-white/40 text-xs">Температура</label>
-                  <input
-                    value={specTemp}
-                    onChange={(e) => setSpecTemp(e.target.value)}
-                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20"
-                    placeholder="900°C температура"
-                  />
-                </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-white/40 text-xs">Без дыма / запаха</label>
-                  <input
-                    value={specNoSmoke}
-                    onChange={(e) => setSpecNoSmoke(e.target.value)}
-                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20"
-                    placeholder="Без дыма и запаха"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-white/40 text-xs">Время горения</label>
-                  <input
-                    value={specTime}
-                    onChange={(e) => setSpecTime(e.target.value)}
-                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20"
-                    placeholder="10 минут горения"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-white/40 text-xs">Без химии</label>
-                  <input
-                    value={specNoChem}
-                    onChange={(e) => setSpecNoChem(e.target.value)}
-                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20"
-                    placeholder="Без химии"
-                  />
-                </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-white/40 text-xs">Розжиг (срок)</label>
-                  <input
-                    value={specStarter}
-                    onChange={(e) => setSpecStarter(e.target.value)}
-                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20"
-                    placeholder="Розжиг за 5-7 минут"
-                  />
-                </div>
-              </div>
+          {/* Free-form specs editor */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-white/40 text-xs">Характеристики (для карточки)</label>
+              <button
+                type="button"
+                onClick={addSpecRow}
+                className="text-xs text-brand-orange/80 hover:text-brand-orange transition-colors flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                Добавить строку
+              </button>
+            </div>
+            {formSpecs.length === 0 && (
+              <p className="text-white/25 text-xs py-1.5">Нажмите «Добавить строку» чтобы добавить характеристику (например: Время горения → До 8 часов)</p>
             )}
+            <div className="space-y-2">
+              {formSpecs.map((spec, i) => (
+                <div key={i} className="flex gap-2 items-center">
+                  <input
+                    value={spec.key}
+                    onChange={(e) => updateSpecRow(i, 'key', e.target.value)}
+                    className="flex-1 bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-xs placeholder:text-white/20 focus:outline-none focus:border-white/20"
+                    placeholder="Название (напр. Время горения)"
+                  />
+                  <input
+                    value={spec.value}
+                    onChange={(e) => updateSpecRow(i, 'value', e.target.value)}
+                    className="flex-1 bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-xs placeholder:text-white/20 focus:outline-none focus:border-white/20"
+                    placeholder="Значение (напр. До 8 часов)"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeSpecRow(i)}
+                    className="p-1.5 text-red-400/40 hover:text-red-400 transition-colors flex-shrink-0"
+                    title="Удалить строку"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-1.5">
@@ -468,29 +446,27 @@ export default function AdminProductsPage() {
             {previewUrls[0] && (
               <div className="flex items-center gap-3 mt-2">
                 <img src={previewUrls[0]} alt="Превью продукта" className="w-16 h-16 rounded-lg object-cover border border-white/10" />
-                <div className="text-white/40 text-xs">
-                  {formImageFiles[0]?.name}
-                </div>
+                <div className="text-white/40 text-xs">{formImageFiles[0]?.name}</div>
               </div>
             )}
             {!previewUrls[0] && formExistingImages[0] && (
               <div className="flex items-center gap-3 mt-2">
-                <img
-                  src={resolveImageUrl(formExistingImages[0])}
-                  alt="Текущее фото товара"
-                  className="w-16 h-16 rounded-lg object-cover border border-white/10"
-                />
+                <img src={resolveImageUrl(formExistingImages[0])} alt="Текущее фото товара" className="w-16 h-16 rounded-lg object-cover border border-white/10" />
                 <div className="text-white/40 text-xs">Текущее сохраненное фото</div>
               </div>
             )}
           </div>
+
           {serverError && (
             <div className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
               {serverError}
             </div>
           )}
+
           <div className="flex gap-3 justify-end">
-            <button type="button" onClick={resetForm} className="px-4 py-2 text-white/40 hover:text-white text-sm transition-colors">Отмена</button>
+            <button type="button" onClick={resetForm} className="px-4 py-2 text-white/40 hover:text-white text-sm transition-colors">
+              Отмена
+            </button>
             <button
               type="submit"
               disabled={createProduct.isPending || updateProduct.isPending || isUploadingImages}
@@ -512,14 +488,35 @@ export default function AdminProductsPage() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-white/5 bg-[#0D0D0D]">
-              {['Продукт', 'SKU', 'Цена', 'Опт. цена', 'Категория', 'В наличии', ''].map((h) => (
+              {['Порядок', 'Продукт', 'SKU', 'Цена', 'Опт. цена', 'Категория', 'В наличии', ''].map((h) => (
                 <th key={h} className="px-4 py-3 text-left text-white/30 text-xs font-medium">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {products.map((product: Product) => (
-              <tr key={product.id} className="border-b border-white/5 last:border-0 hover:bg-white/2 transition-colors">
+            {products.map((product: Product, idx: number) => (
+              <tr key={product.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
+                {/* Sort order controls */}
+                <td className="px-3 py-4">
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      onClick={() => handleReorder(product.id, 'up')}
+                      disabled={idx === 0 || isReordering}
+                      className="p-0.5 text-white/20 hover:text-white transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                      title="Переместить вверх"
+                    >
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleReorder(product.id, 'down')}
+                      disabled={idx === products.length - 1 || isReordering}
+                      className="p-0.5 text-white/20 hover:text-white transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                      title="Переместить вниз"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </td>
                 <td className="px-4 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-[#111111] rounded-lg overflow-hidden flex-shrink-0">
@@ -544,10 +541,7 @@ export default function AdminProductsPage() {
                     onClick={() => toggleStock.mutate(product)}
                     className={product.inStock ? 'text-green-400' : 'text-red-400/50'}
                   >
-                    {product.inStock
-                      ? <ToggleRight className="w-5 h-5" />
-                      : <ToggleLeft className="w-5 h-5" />
-                    }
+                    {product.inStock ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
                   </button>
                 </td>
                 <td className="px-4 py-4">
@@ -562,6 +556,7 @@ export default function AdminProductsPage() {
                     <button
                       onClick={() => confirm('Удалить продукт?') && deleteProduct.mutate(product.id)}
                       className="p-1.5 text-red-400/30 hover:text-red-400 transition-colors"
+                      title="Удалить"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -570,7 +565,11 @@ export default function AdminProductsPage() {
               </tr>
             ))}
             {!products.length && (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-white/30 text-sm">Продукты не найдены</td></tr>
+              <tr>
+                <td colSpan={8} className="px-4 py-8 text-center text-white/30 text-sm">
+                  Продукты не найдены
+                </td>
+              </tr>
             )}
           </tbody>
         </table>

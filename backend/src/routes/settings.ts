@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express'
 import { prisma } from '../utils/prisma'
-import { successResponse } from '../utils/response'
+import { successResponse, errorResponse } from '../utils/response'
 import { authMiddleware, AuthRequest } from '../middleware/auth'
+import { sendSmtpTestEmail } from '../utils/email'
 
 const router = Router()
 
@@ -28,6 +29,19 @@ router.get('/', async (_req: Request, res: Response) => {
 router.get('/all', authMiddleware, async (_req: AuthRequest, res: Response) => {
   const settings = await prisma.setting.findMany({ orderBy: { group: 'asc' } })
   return successResponse(res, settings)
+})
+
+// POST /api/v1/settings/email/test - Admin
+router.post('/email/test', authMiddleware, async (_req: AuthRequest, res: Response) => {
+  try {
+    const result = await sendSmtpTestEmail()
+    if (!result.sent) {
+      return errorResponse(res, 400, 'SMTP_INCOMPLETE', 'Заполните SMTP Host/Port/User/Password и email.notifyTo')
+    }
+    return successResponse(res, { sent: true, recipients: result.recipients })
+  } catch (e) {
+    return errorResponse(res, 500, 'SMTP_TEST_FAILED', `Не удалось отправить тестовое письмо: ${(e as Error).message}`)
+  }
 })
 
 // PUT /api/v1/settings/:key - Admin

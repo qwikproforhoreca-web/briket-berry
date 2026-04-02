@@ -15,6 +15,8 @@ const TABS = [
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState('general')
   const [saved, setSaved] = useState(false)
+  const [smtpTestMessage, setSmtpTestMessage] = useState('')
+  const [smtpTestError, setSmtpTestError] = useState('')
   const videoRef = useRef<HTMLInputElement>(null)
 
   const { data: settings } = useQuery({
@@ -28,6 +30,20 @@ export default function AdminSettingsPage() {
     onSuccess: () => {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
+    },
+  })
+
+  const testSmtp = useMutation({
+    mutationFn: () => axios.post('/api/v1/settings/email/test', {}, { withCredentials: true }),
+    onSuccess: (res) => {
+      const recipients = Array.isArray(res.data?.data?.recipients) ? res.data.data.recipients.join(', ') : ''
+      setSmtpTestError('')
+      setSmtpTestMessage(recipients ? `Тест отправлен: ${recipients}` : 'Тестовое письмо отправлено')
+    },
+    onError: (e: unknown) => {
+      const err = e as any
+      setSmtpTestMessage('')
+      setSmtpTestError(err?.response?.data?.error?.message || 'Ошибка отправки тестового письма')
     },
   })
 
@@ -247,6 +263,26 @@ export default function AdminSettingsPage() {
                 value={settingsMap['email.notifyTo'] || ''}
                 onSave={(val) => handleSave('email.notifyTo', val)}
               />
+
+              <div className="pt-2">
+                <button
+                  onClick={() => {
+                    setSmtpTestMessage('')
+                    setSmtpTestError('')
+                    testSmtp.mutate()
+                  }}
+                  disabled={testSmtp.isPending}
+                  className="btn-secondary py-2 px-4 text-sm"
+                >
+                  {testSmtp.isPending ? 'Отправка теста...' : 'Тест SMTP'}
+                </button>
+                {smtpTestMessage && (
+                  <p className="text-green-400 text-xs mt-2">{smtpTestMessage}</p>
+                )}
+                {smtpTestError && (
+                  <p className="text-red-400 text-xs mt-2">{smtpTestError}</p>
+                )}
+              </div>
             </>
           )}
         </div>

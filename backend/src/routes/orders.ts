@@ -5,12 +5,18 @@ import { successResponse, errorResponse } from '../utils/response'
 import { authMiddleware, AuthRequest } from '../middleware/auth'
 import { sanitizeMiddleware } from '../middleware/sanitize'
 import { orderLimiter } from '../middleware/rateLimiter'
+import { sendOrderNotificationEmail } from '../utils/email'
 
 const router = Router()
 
 const orderSchema = z.object({
   piniKay10kg: z.coerce.number().min(0).max(9999).default(0),
   firestarters8: z.coerce.number().min(0).max(9999).default(0),
+  items: z.array(z.object({
+    productId: z.string().optional(),
+    sku: z.string().optional(),
+    quantity: z.coerce.number().int().min(0).max(9999),
+  })).optional(),
   paymentMethod: z.enum(['online', 'invoice']),
   name: z.string().min(2).max(50),
   phone: z.string().min(7).max(20),
@@ -34,10 +40,10 @@ function generateOrderNumber() {
   return `ORD${year}${month}${day}-${random}`
 }
 
-const PRICES = {
-  piniKay10kg: { productSku: 'PKB-10', price: 890, wholesalePrice: 750, wholesaleMin: 20 },
-  firestarters8: { productSku: 'PFR-8', price: 120, wholesalePrice: 84, wholesaleMin: 50 },
-}
+const LEGACY_PRODUCTS = {
+  piniKay10kg: 'PKB-10',
+  firestarters8: 'PFR-8',
+} as const
 
 // POST /api/v1/orders
 router.post('/', orderLimiter, sanitizeMiddleware, async (req: Request, res: Response) => {
@@ -54,35 +60,72 @@ router.post('/', orderLimiter, sanitizeMiddleware, async (req: Request, res: Res
 
   const data = parsed.data
 
-  // Check at least one item
-  if (!data.piniKay10kg && !data.firestarters8) {
+  const hasDynamicItems = Array.isArray(data.items) && data.items.some((i) => i.quantity > 0)
+
+  // Check at least one item (dynamic or legacy)
+  if (!hasDynamicItems && !data.piniKay10kg && !data.firestarters8) {
     return errorResponse(res, 422, 'VALIDATION_ERROR', 'Выберите хотя бы один товар')
   }
 
-  // Calculate items and totals
+  // Build normalized order items
+  const normalizedItems: Array<{ productId: string; quantity: number }> = []
+
+  if (hasDynamicItems && data.items) {
+    for (const row of data.items) {
+      if (!row.quantity) continue
+      let product = null
+      if (row.productId) {
+        product = await prisma.product.findUnique({ where: { id: row.productId } })
+      }
+      if (!product && row.sku) {
+        product = await prisma.product.findUnique({ where: { sku: row.sku } })
+      }
+      if (!product) continue
+      normalizedItems.push({ productId: product.id, quantity: row.quantity })
+    }
+  } else {
+    // Legacy support for old frontend
+    const legacyRows = [
+      { qty: data.piniKay10kg, sku: LEGACY_PRODUCTS.piniKay10kg },
+      { qty: data.firestarters8, sku: LEGACY_PRODUCTS.firestarters8 },
+    ]
+    for (const row of legacyRows) {
+      if (!row.qty) continue
+      const product = await prisma.product.findUnique({ where: { sku: row.sku } })
+      if (!product) continue
+      normalizedItems.push({ productId: product.id, quantity: row.qty })
+    }
+  }
+
+  if (!normalizedItems.length) {
+    return errorResponse(res, 422, 'VALIDATION_ERROR', 'Выберите хотя бы один товар')
+  }
+
+  // Calculate items and totals from real products
   let subtotal = 0
   let discountAmount = 0
-  const items = []
+  const items: Array<{ productId: string; quantity: number; price: number; subtotal: number }> = []
 
-  for (const [key, config] of Object.entries(PRICES)) {
-    const qty = data[key as keyof typeof PRICES] as number
-    if (!qty) continue
-
-    const product = await prisma.product.findUnique({ where: { sku: config.productSku } })
+  for (const row of normalizedItems) {
+    const product = await prisma.product.findUnique({ where: { id: row.productId } })
     if (!product) continue
 
-    const isWholesale = qty >= config.wholesaleMin
-    const unitPrice = isWholesale ? config.wholesalePrice : config.price
-    const discount = isWholesale ? (config.price - config.wholesalePrice) * qty : 0
+    const regularPrice = Number(product.price)
+    const wholesalePrice = product.priceWholesale ? Number(product.priceWholesale) : regularPrice
+    const wholesaleMin = Number(product.wholesaleMinQty || 1)
 
-    subtotal += config.price * qty
+    const isWholesale = row.quantity >= wholesaleMin
+    const unitPrice = isWholesale ? wholesalePrice : regularPrice
+    const discount = isWholesale ? (regularPrice - wholesalePrice) * row.quantity : 0
+
+    subtotal += regularPrice * row.quantity
     discountAmount += discount
 
     items.push({
       productId: product.id,
-      quantity: qty,
+      quantity: row.quantity,
       price: unitPrice,
-      subtotal: unitPrice * qty,
+      subtotal: unitPrice * row.quantity,
     })
   }
 
@@ -114,7 +157,40 @@ router.post('/', orderLimiter, sanitizeMiddleware, async (req: Request, res: Res
     include: { items: { include: { product: true } } },
   })
 
-  // TODO: Send email notifications
+  try {
+    const emailResult = await sendOrderNotificationEmail({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      paymentMethod: order.paymentMethod,
+      name: order.name,
+      phone: order.phone,
+      email: order.email,
+      establishment: order.establishment,
+      establishmentType: order.establishmentType,
+      city: order.city,
+      comment: order.comment,
+      inn: order.inn,
+      organizationName: order.organizationName,
+      totalAmount: order.totalAmount,
+      createdAt: order.createdAt,
+      items: order.items.map((item) => ({
+        quantity: item.quantity,
+        price: item.price,
+        subtotal: item.subtotal,
+        product: {
+          name: item.product.name,
+          sku: item.product.sku,
+        },
+      })),
+    })
+    if (emailResult.sent) {
+      const recipients = Array.isArray(emailResult.recipients) ? emailResult.recipients : []
+      console.log(`📧 Order notification sent: ${order.orderNumber} -> ${recipients.join(', ')}`)
+    }
+  } catch (e) {
+    console.warn(`⚠️ Failed to send order notification for ${order.orderNumber}:`, (e as Error).message)
+  }
+
   // TODO: Create YooKassa payment if online
 
   return successResponse(res, {
