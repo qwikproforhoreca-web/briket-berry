@@ -45,7 +45,7 @@ const videoUpload = multer({
 })
 
 const imageUpload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -73,11 +73,15 @@ router.post('/video', authMiddleware, videoUpload.single('video'), async (req: A
 
 // POST /api/v1/upload/image
 router.post('/image', authMiddleware, imageUpload.single('image'), async (req: AuthRequest, res: Response) => {
-  const multerReq = req as AuthRequest & { file?: Express.Multer.File }
+  const multerReq = req as AuthRequest & { file?: Express.Multer.File & { buffer?: Buffer } }
   if (!multerReq.file) return errorResponse(res, 400, 'UPLOAD_ERROR', 'Файл не загружен')
 
-  const url = `/uploads/images/${multerReq.file.filename}`
-  return successResponse(res, { url, absoluteUrl: absoluteUrl(req, url) })
+  // Store image as data URL so it stays available even if Railway filesystem is reset.
+  const base64 = multerReq.file.buffer?.toString('base64')
+  if (!base64) return errorResponse(res, 400, 'UPLOAD_ERROR', 'Не удалось прочитать файл')
+
+  const dataUrl = `data:${multerReq.file.mimetype};base64,${base64}`
+  return successResponse(res, { url: dataUrl, absoluteUrl: dataUrl })
 })
 
 export default router
