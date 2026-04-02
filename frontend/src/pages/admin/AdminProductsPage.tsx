@@ -72,6 +72,17 @@ export default function AdminProductsPage() {
     },
   })
 
+  const seedDefaults = useMutation({
+    mutationFn: () => axios.post('/api/v1/products/seed-defaults', {}, { withCredentials: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] })
+    },
+    onError: (e: unknown) => {
+      const err = e as any
+      setServerError(err?.response?.data?.error?.message || 'Не удалось создать базовые товары')
+    },
+  })
+
   const updateProduct = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
       axios.put(`/api/v1/products/${id}`, data, { withCredentials: true }),
@@ -240,29 +251,48 @@ export default function AdminProductsPage() {
   }
 
   const products = data || []
+  const productsCount = products.length
+  const canCreateMore = productsCount < 30
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display font-bold text-2xl text-white">Продукты</h1>
-          <p className="text-white/40 text-sm">Управление каталогом</p>
+          <p className="text-white/40 text-sm">Управление каталогом · {productsCount}/30 товаров</p>
         </div>
-        <button
-          onClick={() => {
-            if (showForm && !editingId) {
-              setShowForm(false)
-            } else {
-              resetForm()
-              setShowForm(true)
-            }
-          }}
-          className="btn-primary py-2.5 px-4 text-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Добавить продукт
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => seedDefaults.mutate()}
+            disabled={seedDefaults.isPending}
+            className="px-3 py-2 text-xs rounded-lg border border-white/15 text-white/80 hover:bg-white/5 transition-colors disabled:opacity-60"
+          >
+            {seedDefaults.isPending ? 'Создаю...' : 'Создать базовые товары'}
+          </button>
+          <button
+            onClick={() => {
+              if (!canCreateMore) return
+              if (showForm && !editingId) {
+                setShowForm(false)
+              } else {
+                resetForm()
+                setShowForm(true)
+              }
+            }}
+            disabled={!canCreateMore}
+            className="btn-primary py-2.5 px-4 text-sm disabled:opacity-50"
+          >
+            <Plus className="w-4 h-4" />
+            Добавить продукт
+          </button>
+        </div>
       </div>
+
+      {!canCreateMore && (
+        <div className="text-amber-300 text-xs bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+          Достигнут лимит 30 товаров. Удалите или отредактируйте существующие позиции.
+        </div>
+      )}
 
       {showForm && (
         <form onSubmit={handleSubmit} className="card p-5 space-y-4 bg-[#111111] border border-white/5 rounded-xl">

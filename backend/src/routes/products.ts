@@ -142,6 +142,8 @@ async function ensureDefaultProducts() {
   )
 }
 
+const MAX_PRODUCTS = 30
+
 // GET /api/v1/products - Public
 router.get('/', async (req: Request, res: Response) => {
   await ensureDefaultProducts()
@@ -170,6 +172,11 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 // POST /api/v1/products - Admin
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
+  const total = await prisma.product.count()
+  if (total >= MAX_PRODUCTS) {
+    return errorResponse(res, 400, 'PRODUCT_LIMIT_REACHED', `Достигнут лимит товаров: ${MAX_PRODUCTS}`)
+  }
+
   const body = req.body || {}
   const { name, sku, slug, shortDesc, description, category, price, priceWholesale, weight, images, specs } = normalizeCreateBody(body)
 
@@ -202,6 +209,13 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   })
 
   return successResponse(res, product, 201)
+})
+
+// POST /api/v1/products/seed-defaults - Admin
+router.post('/seed-defaults', authMiddleware, async (_req: AuthRequest, res: Response) => {
+  await ensureDefaultProducts()
+  const products = await prisma.product.findMany({ orderBy: { sortOrder: 'asc' } })
+  return successResponse(res, { seeded: true, count: products.length })
 })
 
 // PUT /api/v1/products/:id - Admin

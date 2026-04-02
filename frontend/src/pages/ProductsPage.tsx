@@ -215,7 +215,7 @@ export default function ProductsPage() {
       {/* Products */}
       <div className="section-padding bg-[#0A0A0A]">
         <div className="container-custom">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
             {filtered.map((product, i) => (
               <motion.div
                 key={product.id}
