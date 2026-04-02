@@ -67,6 +67,13 @@ function getSpecsValue(specs: ApiProduct['specs'] | undefined, key: string, fall
 export default function ProductsPreview() {
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
+  const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || ''
+  const resolveImageUrl = (url?: string) => {
+    if (!url) return '/favicon.svg'
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url
+    if (url.startsWith('/uploads/') && API_BASE) return `${API_BASE}${url}`
+    return url
+  }
 
   const { data } = useQuery({
     queryKey: ['products-public'],
@@ -82,7 +89,7 @@ export default function ProductsPreview() {
 
     const makeCard = (p: ApiProduct, category: CatalogCategory) => {
       const specs = p.specs
-      const image = Array.isArray(p.images) && p.images[0] ? String(p.images[0]) : '/images/product-placeholder.jpg'
+      const image = resolveImageUrl(Array.isArray(p.images) && p.images[0] ? String(p.images[0]) : '')
 
       const badge =
         category === 'briquettes'
@@ -164,7 +171,7 @@ export default function ProductsPreview() {
           subtitle: '10 кг — 1 ящик',
           price: 'от 890 ₽',
           priceWholesale: 'опт от 750 ₽/кг',
-          image: '/images/pini-kay-product.jpg',
+          image: '/favicon.svg',
           badge: '🔥 Хит продаж',
           badgeColor: 'bg-brand-orange/20 text-brand-orange border-brand-orange/30',
           features: [
@@ -182,7 +189,7 @@ export default function ProductsPreview() {
           subtitle: '8 кубиков в упаковке',
           price: 'от 120 ₽',
           priceWholesale: 'опт: скидка 30%',
-          image: '/images/firestarters-product.jpg',
+          image: '/favicon.svg',
           badge: '✨ Экологичный',
           badgeColor: 'bg-green-500/20 text-green-400 border-green-500/30',
           features: [
@@ -209,7 +216,7 @@ export default function ProductsPreview() {
             subtitle: '8 кубиков в упаковке',
             price: 'от 120 ₽',
             priceWholesale: 'опт: скидка 30%',
-            image: '/images/firestarters-product.jpg',
+            image: '/favicon.svg',
             badge: '✨ Экологичный',
             badgeColor: 'bg-green-500/20 text-green-400 border-green-500/30',
             features: [
@@ -231,7 +238,7 @@ export default function ProductsPreview() {
           subtitle: '10 кг — 1 ящик',
           price: 'от 890 ₽',
           priceWholesale: 'опт от 750 ₽/кг',
-          image: '/images/pini-kay-product.jpg',
+          image: '/favicon.svg',
           badge: '🔥 Хит продаж',
           badgeColor: 'bg-brand-orange/20 text-brand-orange border-brand-orange/30',
           features: [
@@ -281,7 +288,7 @@ export default function ProductsPreview() {
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement
-                    target.src = '/images/product-placeholder.jpg'
+                    target.src = '/favicon.svg'
                   }}
                 />
                 <div className={`absolute inset-0 bg-gradient-to-t ${product.gradient}`} />

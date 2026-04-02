@@ -40,7 +40,16 @@ export default function AdminProductsPage() {
   const [specStarter, setSpecStarter] = useState('')
   const [formFeatured, setFormFeatured] = useState(false)
   const [formImageFiles, setFormImageFiles] = useState<File[]>([])
+  const [formExistingImages, setFormExistingImages] = useState<string[]>([])
   const [isUploadingImages, setIsUploadingImages] = useState(false)
+
+  const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || ''
+  const resolveImageUrl = (url?: string) => {
+    if (!url) return ''
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url
+    if (url.startsWith('/uploads/') && API_BASE) return `${API_BASE}${url}`
+    return url
+  }
 
   const { data } = useQuery({
     queryKey: ['admin-products'],
@@ -139,6 +148,7 @@ export default function AdminProductsPage() {
     setSpecStarter('')
     setFormFeatured(false)
     setFormImageFiles([])
+    setFormExistingImages([])
     setIsUploadingImages(false)
   }
 
@@ -212,7 +222,7 @@ export default function AdminProductsPage() {
         weight: Number(formWeight) || 0,
         description: formDescription,
         shortDesc,
-        images: images.length ? images : [],
+        images: images.length ? images : formExistingImages,
         specs,
         featured: formFeatured,
       }
@@ -222,6 +232,9 @@ export default function AdminProductsPage() {
       } else {
         createProduct.mutate(payload)
       }
+    } catch (e) {
+      const err = e as any
+      setServerError(err?.response?.data?.error?.message || 'Ошибка загрузки фото или сохранения')
     } finally {
       setIsUploadingImages(false)
     }
@@ -241,6 +254,7 @@ export default function AdminProductsPage() {
     setFormShortDesc(product.shortDesc || '')
     setFormFeatured(Boolean(product.featured))
     setFormImageFiles([])
+    setFormExistingImages(Array.isArray(product.images) ? product.images : [])
 
     const specs = product.specs || {}
     setSpecTime(String(specs['Время горения'] || ''))
@@ -487,7 +501,7 @@ export default function AdminProductsPage() {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-[#111111] rounded-lg overflow-hidden flex-shrink-0">
                       {product.images?.[0] && (
-                        <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                        <img src={resolveImageUrl(product.images[0])} alt={product.name} className="w-full h-full object-cover" />
                       )}
                     </div>
                     <div>

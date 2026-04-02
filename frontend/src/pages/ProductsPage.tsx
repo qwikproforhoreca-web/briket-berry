@@ -105,6 +105,13 @@ function ConsumptionCalculator() {
 export default function ProductsPage() {
   const [activeCategory, setActiveCategory] = useState<Category>('all')
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null)
+  const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || ''
+  const resolveImageUrl = (url?: string) => {
+    if (!url) return '/favicon.svg'
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url
+    if (url.startsWith('/uploads/') && API_BASE) return `${API_BASE}${url}`
+    return url
+  }
 
   const { data } = useQuery({
     queryKey: ['products-public'],
@@ -132,7 +139,7 @@ export default function ProductsPage() {
       const price = Number(p.price ?? 0)
       const priceWholesale = p.priceWholesale !== null && typeof p.priceWholesale !== 'undefined' ? Number(p.priceWholesale) : 0
 
-      const image = Array.isArray(p.images) && p.images[0] ? String(p.images[0]) : '/images/product-placeholder.jpg'
+      const image = resolveImageUrl(Array.isArray(p.images) && p.images[0] ? String(p.images[0]) : '')
 
       const badge =
         category === 'briquettes'
@@ -232,7 +239,7 @@ export default function ProductsPage() {
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     onError={(e) => {
                       const t = e.target as HTMLImageElement
-                      t.src = '/images/product-placeholder.jpg'
+                      t.src = '/favicon.svg'
                     }}
                   />
                   <div className={`absolute top-3 left-3 px-2.5 py-1 border rounded-full text-xs font-medium ${product.badgeClass}`}>
