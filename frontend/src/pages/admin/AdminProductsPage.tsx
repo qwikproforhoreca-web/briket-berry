@@ -24,6 +24,7 @@ export default function AdminProductsPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [serverError, setServerError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [formName, setFormName] = useState('')
   const [formSku, setFormSku] = useState('')
   const [formPrice, setFormPrice] = useState('')
@@ -73,6 +74,7 @@ export default function AdminProductsPage() {
       axios.post('/api/v1/products', data, { withCredentials: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] })
+      setSuccessMessage('Товар успешно сохранен')
       resetForm()
     },
     onError: (e: unknown) => {
@@ -85,6 +87,7 @@ export default function AdminProductsPage() {
     mutationFn: () => axios.post('/api/v1/products/seed-defaults', {}, { withCredentials: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] })
+      setSuccessMessage('Базовые товары готовы')
     },
     onError: (e: unknown) => {
       const err = e as any
@@ -97,6 +100,7 @@ export default function AdminProductsPage() {
       axios.put(`/api/v1/products/${id}`, data, { withCredentials: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] })
+      setSuccessMessage('Изменения успешно сохранены')
       resetForm()
     },
     onError: (e: unknown) => {
@@ -163,7 +167,7 @@ export default function AdminProductsPage() {
         withCredentials: true,
         headers: { 'Content-Type': 'multipart/form-data' },
       })
-      urls.push(String(res.data?.data?.url || ''))
+      urls.push(String(res.data?.data?.absoluteUrl || res.data?.data?.url || ''))
     }
 
     return urls.filter(Boolean)
@@ -179,6 +183,8 @@ export default function AdminProductsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setServerError('')
+    setSuccessMessage('')
     setIsUploadingImages(true)
     try {
       const images = await uploadImages(formImageFiles)
@@ -244,6 +250,7 @@ export default function AdminProductsPage() {
     setShowForm(true)
     setEditingId(product.id)
     setServerError('')
+    setSuccessMessage('')
     setFormName(product.name || '')
     setFormSku(product.sku || '')
     setFormPrice(String(product.price ?? ''))
@@ -301,6 +308,12 @@ export default function AdminProductsPage() {
           </button>
         </div>
       </div>
+
+      {successMessage && (
+        <div className="text-green-300 text-xs bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
+          {successMessage}
+        </div>
+      )}
 
       {!canCreateMore && (
         <div className="text-amber-300 text-xs bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
@@ -458,6 +471,16 @@ export default function AdminProductsPage() {
                 <div className="text-white/40 text-xs">
                   {formImageFiles[0]?.name}
                 </div>
+              </div>
+            )}
+            {!previewUrls[0] && formExistingImages[0] && (
+              <div className="flex items-center gap-3 mt-2">
+                <img
+                  src={resolveImageUrl(formExistingImages[0])}
+                  alt="Текущее фото товара"
+                  className="w-16 h-16 rounded-lg object-cover border border-white/10"
+                />
+                <div className="text-white/40 text-xs">Текущее сохраненное фото</div>
               </div>
             )}
           </div>
