@@ -94,9 +94,28 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   })
 })
 
-app.listen(PORT, () => {
+async function initAdmin() {
+  try {
+    const email = process.env.ADMIN_EMAIL || 'admin@briket-berry.ru'
+    const password = process.env.ADMIN_PASSWORD || 'admin123'
+    const existing = await prisma.admin.findUnique({ where: { email } })
+    if (!existing) {
+      const bcrypt = await import('bcryptjs')
+      const hash = await bcrypt.hash(password, 10)
+      await prisma.admin.create({
+        data: { email, password: hash, name: 'Администратор', role: 'SUPER_ADMIN' },
+      })
+      console.log(`✅ Admin created: ${email}`)
+    }
+  } catch (e) {
+    console.warn('⚠️ Could not init admin (DB not ready yet):', (e as Error).message)
+  }
+}
+
+app.listen(PORT, async () => {
   console.log(`🔥 Server running on http://localhost:${PORT}`)
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`)
+  await initAdmin()
 })
 
 export default app
