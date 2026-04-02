@@ -56,29 +56,41 @@ router.post('/chat', aiLimiter, async (req: Request, res: Response) => {
     return errorResponse(res, 422, 'VALIDATION_ERROR', 'Неверный формат запроса')
   }
 
-  // Check if AI is enabled
-  const aiEnabledSetting = await prisma.setting.findUnique({ where: { key: 'ai.enabled' } })
-  if (aiEnabledSetting?.value !== 'true') {
-    return errorResponse(res, 503, 'AI_DISABLED', 'ИИ-консультант временно недоступен')
-  }
-
-  if (!process.env.OPENAI_API_KEY) {
+  const apiKey = process.env.AI_API_KEY || process.env.OPENAI_API_KEY
+  if (!apiKey) {
     return errorResponse(res, 503, 'AI_NOT_CONFIGURED', 'ИИ не настроен')
   }
 
-  const systemPromptSetting = await prisma.setting.findUnique({ where: { key: 'ai.systemPrompt' } })
-  const modelSetting = await prisma.setting.findUnique({ where: { key: 'ai.model' } })
+  // Try to load settings from DB, fall back to defaults if DB unavailable
+  let systemPrompt = DEFAULT_SYSTEM_PROMPT
+  let model = process.env.AI_MODEL || 'deepseek-chat'
+
+  try {
+    const [aiEnabledSetting, systemPromptSetting, modelSetting] = await Promise.all([
+      prisma.setting.findUnique({ where: { key: 'ai.enabled' } }),
+      prisma.setting.findUnique({ where: { key: 'ai.systemPrompt' } }),
+      prisma.setting.findUnique({ where: { key: 'ai.model' } }),
+    ])
+
+    if (aiEnabledSetting?.value === 'false') {
+      return errorResponse(res, 503, 'AI_DISABLED', 'ИИ-консультант временно недоступен')
+    }
+    if (systemPromptSetting?.value) systemPrompt = systemPromptSetting.value
+    if (modelSetting?.value) model = modelSetting.value
+  } catch {
+    // DB not ready yet, use defaults
+  }
 
   const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey,
     baseURL: process.env.AI_BASE_URL || 'https://api.deepseek.com',
   })
 
   try {
     const completion = await openai.chat.completions.create({
-      model: modelSetting?.value || process.env.AI_MODEL || 'deepseek-chat',
+      model,
       messages: [
-        { role: 'system', content: systemPromptSetting?.value || DEFAULT_SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         ...parsed.data.messages.slice(-10),
       ],
       max_tokens: 500,
@@ -92,7 +104,7 @@ router.post('/chat', aiLimiter, async (req: Request, res: Response) => {
       sessionId: parsed.data.sessionId || Math.random().toString(36).slice(2),
     })
   } catch (err: any) {
-    console.error('OpenAI error:', err.message)
+    console.error('AI error:', err.message)
     return errorResponse(res, 500, 'AI_ERROR', 'Ошибка ИИ-консультанта')
   }
 })
