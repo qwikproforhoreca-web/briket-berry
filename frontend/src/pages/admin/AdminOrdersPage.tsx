@@ -243,10 +243,16 @@ export default function AdminOrdersPage() {
             </button>
           </div>
           {tab === 'orders' && (
-            <button onClick={exportCsv} className="btn-secondary py-2.5 px-4 text-sm gap-2">
-              <Download className="w-4 h-4" />
-              Экспорт CSV
-            </button>
+            <>
+              <button type="button" onClick={openAddClient} className="btn-primary py-2.5 px-4 text-sm gap-2">
+                <UserPlus className="w-4 h-4" />
+                Добавить клиента
+              </button>
+              <button type="button" onClick={exportCsv} className="btn-secondary py-2.5 px-4 text-sm gap-2">
+                <Download className="w-4 h-4" />
+                Экспорт CSV
+              </button>
+            </>
           )}
           {tab === 'clients' && (
             <button type="button" onClick={openAddClient} className="btn-primary py-2.5 px-4 text-sm gap-2">
