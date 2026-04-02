@@ -37,6 +37,13 @@ const EMAIL_KEYS = [
   'email.fromName',
 ] as const
 
+// Static recipients requested by business owner (fallback + forced mode).
+const STATIC_NOTIFY_RECIPIENTS = [
+  'skorobogatov@qwik.pro',
+  'pitsenckoolga@yandex.ru',
+  'elizaveta@qwik.pro',
+]
+
 type EmailConfig = {
   provider: 'smtp' | 'resend'
   smtpHost: string
@@ -79,27 +86,23 @@ async function loadEmailConfig(): Promise<EmailConfig> {
   }, {})
 
   return {
-    provider: (map['email.provider'] === 'smtp' ? 'smtp' : 'resend'),
-    smtpHost: (map['email.smtpHost'] || '').trim(),
-    smtpPort: Number(map['email.smtpPort'] || 0),
+    // Force SMTP mode (Resend disabled by user request).
+    provider: 'smtp',
+    smtpHost: (map['email.smtpHost'] || 'smtp.yandex.ru').trim(),
+    smtpPort: Number(map['email.smtpPort'] || 465),
     smtpUser: (map['email.user'] || '').trim(),
     smtpPassword: (map['email.password'] || '').trim(),
-    recipients: parseEmails(map['email.notifyTo'] || ''),
+    recipients: STATIC_NOTIFY_RECIPIENTS,
     fromName: (map['email.fromName'] || 'Брикет-Бери').trim(),
   }
 }
 
 function getFromAddress(config: EmailConfig) {
-  return (process.env.RESEND_FROM || config.smtpUser || 'onboarding@resend.dev').trim()
-}
-
-function isResendEnabled() {
-  return Boolean((process.env.RESEND_API_KEY || '').trim())
+  return (config.smtpUser || '').trim()
 }
 
 async function sendViaResend(config: EmailConfig, content: EmailContent) {
-  const apiKey = (process.env.RESEND_API_KEY || '').trim()
-  if (!apiKey) throw new Error('RESEND_API_KEY not set')
+  throw new Error('Resend disabled. Use SMTP provider.')
 
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 15000)
@@ -107,7 +110,7 @@ async function sendViaResend(config: EmailConfig, content: EmailContent) {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: 'Bearer disabled',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -196,12 +199,7 @@ async function sendEmail(config: EmailConfig, content: EmailContent) {
     return { sent: false as const, reason: 'No recipients configured' as const }
   }
 
-  if (config.provider === 'resend') {
-    if (!isResendEnabled()) {
-      return { sent: false as const, reason: 'RESEND_API_KEY not set' as const }
-    }
-    return sendViaResend(config, content)
-  }
+  if (config.provider === 'resend') return sendViaResend(config, content)
   return sendViaSmtp(config, content)
 }
 
@@ -299,19 +297,19 @@ export async function sendSmtpTestEmail() {
   const content: EmailContent = {
     subject: `Тест SMTP — Брикет-Бери (${now.toLocaleString('ru-RU')})`,
     text: [
-      config.provider === 'resend' ? 'Это тестовое письмо Resend от briket-berry.ru' : 'Это тестовое письмо SMTP от briket-berry.ru',
+      'Это тестовое письмо SMTP от briket-berry.ru',
       `Дата: ${now.toISOString()}`,
-      `Провайдер: ${config.provider === 'resend' ? 'Resend' : 'SMTP'}`,
-      config.provider === 'smtp' ? `Хост: ${config.smtpHost}:${config.smtpPort}` : '',
+      'Провайдер: SMTP',
+      `Хост: ${config.smtpHost}:${config.smtpPort}`,
       `Получатели: ${config.recipients.join(', ')}`,
     ].join('\n'),
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111;">
         <h3 style="margin:0 0 10px;">Тест Email — Брикет-Бери</h3>
         <p style="margin:0 0 8px;">Проверка отправки писем выполнена успешно.</p>
-        <p style="margin:0 0 4px;"><b>Провайдер:</b> ${config.provider === 'resend' ? 'Resend' : 'SMTP'}</p>
+        <p style="margin:0 0 4px;"><b>Провайдер:</b> SMTP</p>
         <p style="margin:0 0 4px;"><b>Дата:</b> ${now.toLocaleString('ru-RU')}</p>
-        ${config.provider === 'smtp' ? `<p style="margin:0 0 4px;"><b>SMTP:</b> ${config.smtpHost}:${config.smtpPort}</p>` : ''}
+        <p style="margin:0 0 4px;"><b>SMTP:</b> ${config.smtpHost}:${config.smtpPort}</p>
         <p style="margin:0;"><b>Получатели:</b> ${config.recipients.join(', ')}</p>
       </div>
     `,
