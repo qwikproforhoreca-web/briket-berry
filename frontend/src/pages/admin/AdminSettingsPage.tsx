@@ -38,7 +38,7 @@ export default function AdminSettingsPage() {
       axios.post(
         '/api/v1/settings/email/test',
         {},
-        { withCredentials: true, timeout: 15000 },
+        { withCredentials: true, timeout: 45000 },
       ),
     onSuccess: (res) => {
       const recipients = Array.isArray(res.data?.data?.recipients) ? res.data.data.recipients.join(', ') : ''
@@ -49,7 +49,7 @@ export default function AdminSettingsPage() {
       const err = e as any
       setSmtpTestMessage('')
       if (err?.code === 'ECONNABORTED') {
-        setSmtpTestError('SMTP сервер не ответил вовремя (таймаут). Проверьте логин/пароль и доступ к SMTP.')
+        setSmtpTestError('SMTP сервер долго не отвечает. Попробуйте снова или проверьте доступ к SMTP в настройках почты.')
         return
       }
       setSmtpTestError(err?.response?.data?.error?.message || 'Ошибка отправки тестового письма')
