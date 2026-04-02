@@ -6,6 +6,8 @@ import { authMiddleware, AuthRequest } from '../middleware/auth'
 import { sanitizeMiddleware } from '../middleware/sanitize'
 import { orderLimiter } from '../middleware/rateLimiter'
 import { sendOrderNotificationEmail } from '../utils/email'
+import { isOutboundNodeSmtpBlocked } from '../utils/mailPolicy'
+import { isCloudbellMailWebhookEnabled, notifyOrderViaCloudbell } from '../utils/mailWebhook'
 
 const router = Router()
 
@@ -158,8 +160,7 @@ router.post('/', orderLimiter, sanitizeMiddleware, async (req: Request, res: Res
   })
 
   try {
-    const emailResult = await sendOrderNotificationEmail({
-      id: order.id,
+    const payload = {
       orderNumber: order.orderNumber,
       paymentMethod: order.paymentMethod,
       name: order.name,
@@ -172,17 +173,51 @@ router.post('/', orderLimiter, sanitizeMiddleware, async (req: Request, res: Res
       inn: order.inn,
       organizationName: order.organizationName,
       totalAmount: order.totalAmount,
-      createdAt: order.createdAt,
       items: order.items.map((item) => ({
         quantity: item.quantity,
         price: item.price,
         subtotal: item.subtotal,
-        product: {
-          name: item.product.name,
-          sku: item.product.sku,
-        },
+        productName: item.product.name,
+        sku: item.product.sku,
       })),
-    })
+    }
+
+    let emailResult: { sent: boolean; recipients?: string[] }
+    if (isCloudbellMailWebhookEnabled()) {
+      emailResult = await notifyOrderViaCloudbell(payload)
+    } else if (isOutboundNodeSmtpBlocked()) {
+      console.warn(
+        `⚠️ Заявка ${order.orderNumber}: письмо не отправлено — на Railway задайте CLOUDBELL_MAIL_WEBHOOK_URL и MAIL_WEBHOOK_SECRET (SMTP с контейнера недоступен).`,
+      )
+      emailResult = { sent: false }
+    } else {
+      emailResult = await sendOrderNotificationEmail({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        paymentMethod: order.paymentMethod,
+        name: order.name,
+        phone: order.phone,
+        email: order.email,
+        establishment: order.establishment,
+        establishmentType: order.establishmentType,
+        city: order.city,
+        comment: order.comment,
+        inn: order.inn,
+        organizationName: order.organizationName,
+        totalAmount: order.totalAmount,
+        createdAt: order.createdAt,
+        items: order.items.map((item) => ({
+          quantity: item.quantity,
+          price: item.price,
+          subtotal: item.subtotal,
+          product: {
+            name: item.product.name,
+            sku: item.product.sku,
+          },
+        })),
+      })
+    }
+
     if (emailResult.sent) {
       const recipients = Array.isArray(emailResult.recipients) ? emailResult.recipients : []
       console.log(`📧 Order notification sent: ${order.orderNumber} -> ${recipients.join(', ')}`)

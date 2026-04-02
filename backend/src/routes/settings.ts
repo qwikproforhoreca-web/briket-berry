@@ -3,6 +3,12 @@ import { prisma } from '../utils/prisma'
 import { successResponse, errorResponse } from '../utils/response'
 import { authMiddleware, AuthRequest } from '../middleware/auth'
 import { sendSmtpTestEmail } from '../utils/email'
+import { isOutboundNodeSmtpBlocked, MAIL_WEBHOOK_REQUIRED_RU } from '../utils/mailPolicy'
+import {
+  getMailWebhookDebug,
+  isCloudbellMailWebhookEnabled,
+  sendTestViaCloudbell,
+} from '../utils/mailWebhook'
 
 const router = Router()
 
@@ -31,16 +37,57 @@ router.get('/all', authMiddleware, async (_req: AuthRequest, res: Response) => {
   return successResponse(res, settings)
 })
 
+// GET /api/v1/settings/email/webhook-status — видно, видит ли API переменные Railway (без отправки почты)
+router.get('/email/webhook-status', authMiddleware, async (_req: AuthRequest, res: Response) => {
+  return successResponse(res, getMailWebhookDebug())
+})
+
 // POST /api/v1/settings/email/test - Admin
 router.post('/email/test', authMiddleware, async (_req: AuthRequest, res: Response) => {
+  const dbg = getMailWebhookDebug()
+
+  if (isCloudbellMailWebhookEnabled()) {
+    try {
+      const result = await sendTestViaCloudbell()
+      if (!result.sent) {
+        return errorResponse(res, 400, 'EMAIL_INCOMPLETE', 'Webhook ответил без успеха — проверьте PHP и mail-config.php')
+      }
+      return successResponse(res, { sent: true, recipients: result.recipients, via: 'webhook' as const })
+    } catch (e) {
+      const msg = (e as Error).message
+      const hint =
+        dbg.hasUrl && !dbg.hasSecret
+          ? ' Задайте MAIL_WEBHOOK_SECRET в Railway (как webhook_secret в mail-config.php).'
+          : !dbg.hasUrl && dbg.hasSecret
+            ? ' Задайте CLOUDBELL_MAIL_WEBHOOK_URL или MAIL_WEBHOOK_URL.'
+            : ''
+      return errorResponse(res, 500, 'EMAIL_TEST_FAILED', `Webhook: ${msg}${hint}`)
+    }
+  }
+
+  if (isOutboundNodeSmtpBlocked()) {
+    return errorResponse(res, 400, 'EMAIL_WEBHOOK_REQUIRED', MAIL_WEBHOOK_REQUIRED_RU)
+  }
+
   try {
     const result = await sendSmtpTestEmail()
     if (!result.sent) {
-      return errorResponse(res, 400, 'EMAIL_INCOMPLETE', 'Заполните email.notifyTo и настройте SMTP или RESEND_API_KEY')
+      return errorResponse(
+        res,
+        400,
+        'EMAIL_INCOMPLETE',
+        'Заполните SMTP в админке (Host, Port, User, Password)',
+      )
     }
-    return successResponse(res, { sent: true, recipients: result.recipients })
+    const recipients = 'recipients' in result && Array.isArray(result.recipients) ? result.recipients : []
+    return successResponse(res, { sent: true, recipients, via: 'smtp' as const })
   } catch (e) {
-    return errorResponse(res, 500, 'EMAIL_TEST_FAILED', `Не удалось отправить тестовое письмо: ${(e as Error).message}`)
+    return errorResponse(
+      res,
+      500,
+      'EMAIL_TEST_FAILED',
+      `Не удалось отправить тестовое письмо: ${(e as Error).message}`,
+    )
   }
 })
 

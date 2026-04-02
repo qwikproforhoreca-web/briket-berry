@@ -24,6 +24,13 @@ export default function AdminSettingsPage() {
     queryFn: () => axios.get('/api/v1/settings/all', { withCredentials: true }).then(r => r.data.data),
   })
 
+  const { data: webhookStatus } = useQuery({
+    queryKey: ['admin-email-webhook-status'],
+    queryFn: () =>
+      axios.get('/api/v1/settings/email/webhook-status', { withCredentials: true }).then(r => r.data.data),
+    staleTime: 30_000,
+  })
+
   const updateSetting = useMutation({
     mutationFn: ({ key, value }: { key: string; value: string }) =>
       axios.put(`/api/v1/settings/${key}`, { value }, { withCredentials: true }),
@@ -42,17 +49,26 @@ export default function AdminSettingsPage() {
       ),
     onSuccess: (res) => {
       const recipients = Array.isArray(res.data?.data?.recipients) ? res.data.data.recipients.join(', ') : ''
+      const via = res.data?.data?.via === 'webhook' ? ' (через хостинг)' : ''
       setSmtpTestError('')
-      setSmtpTestMessage(recipients ? `Тест отправлен: ${recipients}` : 'Тестовое письмо отправлено')
+      setSmtpTestMessage(
+        recipients ? `Тест отправлен${via}: ${recipients}` : `Тестовое письмо отправлено${via}`,
+      )
     },
     onError: (e: unknown) => {
       const err = e as any
       setSmtpTestMessage('')
       if (err?.code === 'ECONNABORTED') {
-        setSmtpTestError('SMTP сервер долго не отвечает. Попробуйте снова или проверьте доступ к SMTP в настройках почты.')
+        setSmtpTestError('Запрос долго не завершился. Если вы на Railway — настройте webhook (см. жёлтый блок выше), прямой SMTP с платформы недоступен.')
         return
       }
-      setSmtpTestError(err?.response?.data?.error?.message || 'Ошибка отправки тестового письма')
+      const code = err?.response?.data?.error?.code
+      const msg = err?.response?.data?.error?.message
+      if (code === 'EMAIL_WEBHOOK_REQUIRED' && typeof msg === 'string') {
+        setSmtpTestError(msg)
+        return
+      }
+      setSmtpTestError(msg || 'Ошибка отправки тестового письма')
     },
   })
 
@@ -252,6 +268,10 @@ export default function AdminSettingsPage() {
           {activeTab === 'email' && (
             <>
               <h2 className="font-semibold text-white">Настройки Email</h2>
+              <WebhookStatusBanner status={webhookStatus} />
+              <p className="text-white/35 text-xs">
+                Если в Railway заданы CLOUDBELL_MAIL_WEBHOOK_URL и MAIL_WEBHOOK_SECRET, тест и заявки отправляются через PHP на хостинге (SMTP с Cloudbell), а не с сервера Railway.
+              </p>
               <EmailProviderField
                 value={settingsMap['email.provider'] || 'resend'}
                 onSave={(val) => handleSave('email.provider', val)}
@@ -289,7 +309,9 @@ export default function AdminSettingsPage() {
                 >
                   {testSmtp.isPending
                     ? 'Отправка теста...'
-                    : `Тест ${settingsMap['email.provider'] === 'smtp' ? 'SMTP' : 'Resend'}`}
+                    : webhookStatus?.ready
+                      ? 'Тест почты (через хостинг)'
+                      : `Тест ${settingsMap['email.provider'] === 'smtp' ? 'SMTP' : 'Resend'}`}
                 </button>
                 {smtpTestMessage && (
                   <p className="text-green-400 text-xs mt-2">{smtpTestMessage}</p>
@@ -302,6 +324,48 @@ export default function AdminSettingsPage() {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+type WebhookDebug = {
+  ready: boolean
+  hasUrl: boolean
+  hasSecret: boolean
+  urlHost: string
+  nodeSmtpBlocked?: boolean
+}
+
+function WebhookStatusBanner({ status }: { status: WebhookDebug | undefined }) {
+  if (status === undefined) {
+    return <p className="text-white/30 text-xs">Проверка webhook на сервере…</p>
+  }
+  if (status.ready) {
+    return (
+      <div className="p-3 rounded-xl border border-green-500/25 bg-green-500/10 text-green-400 text-xs space-y-1">
+        <div className="font-medium">Почта с API: webhook включён</div>
+        <div className="text-white/50">
+          Запрос уходит на <span className="text-white/70">{status.urlHost || 'ваш URL'}</span>. Получателей задаёт{' '}
+          <code className="text-white/60">mail-config.php</code> на хостинге, не поле ниже.
+        </div>
+      </div>
+    )
+  }
+  const hint =
+    status.hasUrl && !status.hasSecret
+      ? 'В Railway не задан MAIL_WEBHOOK_SECRET (должен совпадать с webhook_secret в mail-config.php).'
+      : !status.hasUrl && status.hasSecret
+        ? 'В Railway не задан CLOUDBELL_MAIL_WEBHOOK_URL (https://briket-berry.ru/mail/mail-order.php).'
+        : 'В Railway задайте оба: CLOUDBELL_MAIL_WEBHOOK_URL (или MAIL_WEBHOOK_URL) и MAIL_WEBHOOK_SECRET, затем Redeploy.'
+  const blockedNote =
+    status.nodeSmtpBlocked === true
+      ? 'На этом сервере тест через SMTP из админки отключён: платформа не пускает исходящий SMTP к Яндексу. Нужен только webhook.'
+      : 'Локально тест может идти через SMTP из полей ниже.'
+  return (
+    <div className="p-3 rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-200 text-xs space-y-1">
+      <div className="font-medium">Webhook не готов</div>
+      <div className="text-white/50">{hint}</div>
+      <div className="text-white/40">{blockedNote}</div>
     </div>
   )
 }

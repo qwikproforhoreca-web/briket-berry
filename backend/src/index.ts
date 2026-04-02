@@ -19,6 +19,8 @@ import adminRouter from './routes/admin'
 import settingsRouter from './routes/settings'
 import uploadRouter from './routes/upload'
 import aiRouter from './routes/ai'
+import { isOutboundNodeSmtpBlocked } from './utils/mailPolicy'
+import { getMailWebhookDebug } from './utils/mailWebhook'
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -202,6 +204,13 @@ async function initDefaultProducts() {
 app.listen(PORT, async () => {
   console.log(`🔥 Server running on http://localhost:${PORT}`)
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`)
+  const mailDbg = getMailWebhookDebug()
+  console.log(
+    `[mail] webhook ${mailDbg.ready ? 'ON' : 'OFF'} (hasUrl=${mailDbg.hasUrl} hasSecret=${mailDbg.hasSecret} host=${mailDbg.urlHost || '—'})`,
+  )
+  if (isOutboundNodeSmtpBlocked() && !mailDbg.ready) {
+    console.warn('[mail] Исходящий SMTP из Node на этой платформе не используется — задайте CLOUDBELL_MAIL_WEBHOOK_URL + MAIL_WEBHOOK_SECRET')
+  }
   await initAdmin()
   await initDefaultProducts()
 })

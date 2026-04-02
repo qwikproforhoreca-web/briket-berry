@@ -1,0 +1,22 @@
+Установка почты на Cloudbell (REG.RU и т.п.)
+==========================================
+
+1) Создайте папку на сайте, например: public_html/mail/
+
+2) Загрузите файлы:
+   - mail-order.php
+   - .htaccess
+   - mail-config.php  (скопируйте из mail-config.example.php и заполните)
+
+3) В mail-config.php:
+   - webhook_secret — длинная случайная строка (та же, что в Railway)
+   - smtp_* и from_email — Яндекс (пароль приложения)
+   - recipients — кому слать заявки
+
+4) В Railway → Variables:
+   CLOUDBELL_MAIL_WEBHOOK_URL=https://briket-berry.ru/mail/mail-order.php
+   MAIL_WEBHOOK_SECRET=тот_же_секрет_что_в_mail-config.php
+
+5) Deploy Railway. В админке сайта нажмите «Тест …» — письмо уйдёт через хостинг.
+
+Cron не нужен: письмо отправляется сразу при создании заявки (Railway вызывает PHP).
