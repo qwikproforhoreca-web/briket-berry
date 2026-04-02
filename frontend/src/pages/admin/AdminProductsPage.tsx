@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight, X } from 'lucide-react'
@@ -8,9 +8,9 @@ interface Product {
   name: string
   sku: string
   price: number
-  wholesalePrice: number
+  priceWholesale?: number
   category: string
-  weight?: string
+  weight?: number
   description?: string
   inStock: boolean
   images?: string[]
@@ -19,13 +19,17 @@ interface Product {
 export default function AdminProductsPage() {
   const queryClient = useQueryClient()
   const [showForm, setShowForm] = useState(false)
+  const [serverError, setServerError] = useState('')
   const [formName, setFormName] = useState('')
   const [formSku, setFormSku] = useState('')
   const [formPrice, setFormPrice] = useState('')
   const [formWholesalePrice, setFormWholesalePrice] = useState('')
-  const [formCategory, setFormCategory] = useState('briquettes')
+  const [formCategory, setFormCategory] = useState<'BRIQUETTES' | 'FIRESTARTERS'>('BRIQUETTES')
   const [formWeight, setFormWeight] = useState('')
   const [formDescription, setFormDescription] = useState('')
+  const [formShortDesc, setFormShortDesc] = useState('')
+  const [formImageFiles, setFormImageFiles] = useState<File[]>([])
+  const [isUploadingImages, setIsUploadingImages] = useState(false)
 
   const { data } = useQuery({
     queryKey: ['admin-products'],
@@ -51,30 +55,97 @@ export default function AdminProductsPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] })
       resetForm()
     },
+    onError: (e: unknown) => {
+      const err = e as any
+      setServerError(err?.response?.data?.error?.message || 'Ошибка при создании продукта')
+    },
   })
+
+  const previewUrls = useMemo(() => {
+    return formImageFiles.map((f) => URL.createObjectURL(f))
+  }, [formImageFiles])
+
+  useEffect(() => {
+    // Release object URLs to avoid memory leaks
+    return () => {
+      previewUrls.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [previewUrls])
 
   function resetForm() {
     setShowForm(false)
+    setServerError('')
     setFormName('')
     setFormSku('')
     setFormPrice('')
     setFormWholesalePrice('')
-    setFormCategory('briquettes')
+    setFormCategory('BRIQUETTES')
     setFormWeight('')
     setFormDescription('')
+    setFormShortDesc('')
+    setFormImageFiles([])
+    setIsUploadingImages(false)
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function uploadImages(files: File[]) {
+    if (!files.length) return []
+    const urls: string[] = []
+
+    for (const file of files) {
+      const fd = new FormData()
+      fd.append('image', file)
+      const res = await axios.post('/api/v1/upload/image', fd, {
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      urls.push(String(res.data?.data?.url || ''))
+    }
+
+    return urls.filter(Boolean)
+  }
+
+  function toSlug(input: string) {
+    return input
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9а-яё]+/gi, '-')
+      .replace(/(^-|-$)/g, '')
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    createProduct.mutate({
-      name: formName,
-      sku: formSku,
-      price: Number(formPrice),
-      wholesalePrice: Number(formWholesalePrice) || 0,
-      category: formCategory,
-      weight: formWeight,
-      description: formDescription,
-    })
+    setIsUploadingImages(true)
+    try {
+      const images = await uploadImages(formImageFiles)
+      const price = Number(formPrice)
+      const wholesalePriceRaw = formWholesalePrice ? Number(formWholesalePrice) : undefined
+
+      const shortDesc =
+        formShortDesc.trim() ||
+        (formDescription.trim() ? formDescription.trim().slice(0, 140) : '')
+
+      // Avoid sending invalid payloads to Prisma
+      if (!formName.trim() || !formSku.trim() || !Number.isFinite(price) || !shortDesc) {
+        setServerError('Заполни обязательные поля: Название, SKU, Цена и Описание/Короткое описание')
+        return
+      }
+
+      createProduct.mutate({
+        name: formName.trim(),
+        slug: toSlug(formName),
+        sku: formSku.trim(),
+        price,
+        // Optional field: if empty - omit so Prisma keeps NULL
+        ...(typeof wholesalePriceRaw === 'number' ? { priceWholesale: wholesalePriceRaw } : {}),
+        category: formCategory,
+        weight: Number(formWeight) || 0,
+        description: formDescription,
+        shortDesc,
+        images: images.length ? images : [],
+      })
+    } finally {
+      setIsUploadingImages(false)
+    }
   }
 
   const products = data || []
@@ -125,8 +196,8 @@ export default function AdminProductsPage() {
               <label className="text-white/40 text-xs">Категория</label>
               <select value={formCategory} onChange={(e) => setFormCategory(e.target.value)}
                 className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/20">
-                <option value="briquettes">Брикеты</option>
-                <option value="firestarters">Разжигатели</option>
+                <option value="BRIQUETTES">Брикеты</option>
+                <option value="FIRESTARTERS">Разжигатели</option>
               </select>
             </div>
             <div className="space-y-1.5">
@@ -140,10 +211,42 @@ export default function AdminProductsPage() {
             <textarea value={formDescription} onChange={(e) => setFormDescription(e.target.value)} rows={3}
               className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20 resize-none" placeholder="Описание продукта..." />
           </div>
+          <div className="space-y-1.5">
+            <label className="text-white/40 text-xs">Короткое описание (карточка)</label>
+            <input
+              value={formShortDesc}
+              onChange={(e) => setFormShortDesc(e.target.value)}
+              className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20"
+              placeholder="Например: профессиональные брикеты Pini Kay для ресторанов"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-white/40 text-xs">Фото товара</label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple={false}
+              onChange={(e) => setFormImageFiles(e.target.files ? Array.from(e.target.files) : [])}
+              className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/20 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border file:border-white/10 file:bg-[#0A0A0A] file:text-white/70"
+            />
+            {previewUrls[0] && (
+              <div className="flex items-center gap-3 mt-2">
+                <img src={previewUrls[0]} alt="Превью продукта" className="w-16 h-16 rounded-lg object-cover border border-white/10" />
+                <div className="text-white/40 text-xs">
+                  {formImageFiles[0]?.name}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="flex gap-3 justify-end">
             <button type="button" onClick={resetForm} className="px-4 py-2 text-white/40 hover:text-white text-sm transition-colors">Отмена</button>
-            <button type="submit" disabled={createProduct.isPending} className="btn-primary py-2 px-5 text-sm">
-              {createProduct.isPending ? 'Сохранение...' : 'Создать продукт'}
+            <button
+              type="submit"
+              disabled={createProduct.isPending || isUploadingImages}
+              className="btn-primary py-2 px-5 text-sm"
+            >
+              {createProduct.isPending ? 'Сохранение...' : isUploadingImages ? 'Загрузка фото...' : 'Создать продукт'}
             </button>
           </div>
         </form>
@@ -177,7 +280,7 @@ export default function AdminProductsPage() {
                 <td className="px-4 py-4 text-white/40 text-xs font-mono">{product.sku}</td>
                 <td className="px-4 py-4 text-white text-sm">{Number(product.price).toLocaleString('ru')} ₽</td>
                 <td className="px-4 py-4 text-white/50 text-sm">
-                  {product.wholesalePrice ? `${Number(product.wholesalePrice).toLocaleString('ru')} ₽` : '—'}
+                  {product.priceWholesale ? `${Number(product.priceWholesale).toLocaleString('ru')} ₽` : '—'}
                 </td>
                 <td className="px-4 py-4 text-white/40 text-xs">{product.category}</td>
                 <td className="px-4 py-4">

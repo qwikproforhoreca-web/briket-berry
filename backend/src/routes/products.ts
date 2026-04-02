@@ -33,7 +33,81 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 // POST /api/v1/products - Admin
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
-  const product = await prisma.product.create({ data: req.body })
+  const body = req.body || {}
+
+  // Backward-compatible normalization for different frontend payloads.
+  type PrismaProductCategory = 'BRIQUETTES' | 'FIRESTARTERS'
+
+  const toSlug = (input: unknown) => {
+    const s = String(input || '')
+    return s
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9а-яё]+/gi, '-')
+      .replace(/(^-|-$)/g, '')
+  }
+
+  const normalizeCategory = (value: unknown): PrismaProductCategory | undefined => {
+    const v = String(value || '').trim().toLowerCase()
+    if (v === 'briquettes') return 'BRIQUETTES'
+    if (v === 'firestarters') return 'FIRESTARTERS'
+    if (v === 'брекеты' || v === 'брекеты pini kay') return 'BRIQUETTES'
+    if (v === 'разжигатели') return 'FIRESTARTERS'
+    return undefined
+  }
+
+  const normalizeNumber = (value: unknown) => {
+    const n = Number(value)
+    return Number.isFinite(n) ? n : undefined
+  }
+
+  const name = String(body.name || '').trim()
+  const sku = String(body.sku || '').trim()
+  const description = String(body.description || '').trim()
+
+  const slug = body.slug ? String(body.slug) : toSlug(name)
+  const shortDesc =
+    body.shortDesc
+      ? String(body.shortDesc)
+      : (description ? description.slice(0, 140) : name)
+
+  const category = normalizeCategory(body.category)
+
+  const price = normalizeNumber(body.price)
+  const priceWholesale = normalizeNumber(body.priceWholesale ?? body.wholesalePrice)
+  const weight = normalizeNumber(body.weight) ?? 0
+
+  const images = Array.isArray(body.images) ? body.images : []
+
+  if (!name || !sku || !slug || !shortDesc || price === undefined || !category) {
+    return errorResponse(
+      res,
+      400,
+      'VALIDATION_ERROR',
+      'Не хватает обязательных полей (name, sku, slug, shortDesc, price, category)'
+    )
+  }
+
+  const product = await prisma.product.create({
+    data: {
+      name,
+      slug,
+      sku,
+      description: description || name,
+      shortDesc,
+      price,
+      ...(priceWholesale !== undefined ? { priceWholesale } : {}),
+      category,
+      weight,
+      ...(Array.isArray(images) ? { images } : {}),
+      // Prisma schema требует specs: Json (можно пустой объект)
+      specs: typeof body.specs !== 'undefined' ? body.specs : {},
+      ...(typeof body.inStock === 'boolean' ? { inStock: body.inStock } : {}),
+      ...(typeof body.featured === 'boolean' ? { featured: body.featured } : {}),
+      ...(body.sortOrder !== undefined ? { sortOrder: Number(body.sortOrder) || 0 } : {}),
+    },
+  })
+
   return successResponse(res, product, 201)
 })
 

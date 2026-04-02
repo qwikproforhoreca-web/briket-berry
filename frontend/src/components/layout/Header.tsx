@@ -44,7 +44,11 @@ export default function Header() {
     >
       <div className="container-custom flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 group">
+        <Link
+          to="/"
+          className="flex items-center gap-2.5 group"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'auto' })}
+        >
           <FlameLogo size={38} />
           <div className="leading-none">
             <div className="font-display font-black text-base text-white tracking-tight">

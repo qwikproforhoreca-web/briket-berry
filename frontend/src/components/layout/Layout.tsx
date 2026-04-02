@@ -7,7 +7,8 @@ export default function Layout() {
   const { pathname } = useLocation()
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' })
+    // Reset scroll position on route change
+    window.scrollTo({ top: 0, behavior: 'auto' })
   }, [pathname])
 
   return (

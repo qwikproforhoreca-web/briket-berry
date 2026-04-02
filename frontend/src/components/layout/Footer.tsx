@@ -44,7 +44,11 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <Link to="/" className="flex items-center gap-2.5 mb-4 group">
+            <Link
+              to="/"
+              className="flex items-center gap-2.5 mb-4 group"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'auto' })}
+            >
               <FlameLogo size={38} withGlow={false} />
               <div className="leading-none">
                 <div className="font-display font-black text-base text-white tracking-tight">
