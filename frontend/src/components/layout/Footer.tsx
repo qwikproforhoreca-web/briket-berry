@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
-import { Phone, Mail, MapPin, MessageCircle, Send, MessagesSquare } from 'lucide-react'
+import { Phone, Mail, MapPin, MessageCircle, Send } from 'lucide-react'
 import FlameLogo from '@/components/ui/Flamelogo'
+import { useSettings } from '@/hooks/useSettings'
 
 const footerLinks = {
   products: [
@@ -17,7 +18,26 @@ const footerLinks = {
   ],
 }
 
+function toDigits(phone: string) {
+  return phone.replace(/\D/g, '')
+}
+
+function telegramUrl(handle: string) {
+  const username = handle.startsWith('@') ? handle.slice(1) : handle
+  return `https://t.me/${username}`
+}
+
+function maxUrl(value: string) {
+  if (/^\+?\d[\d\s()-]*$/.test(value)) {
+    return `https://max.ru/${toDigits(value)}`
+  }
+  const username = value.startsWith('@') ? value.slice(1) : value
+  return `https://max.ru/${username}`
+}
+
 export default function Footer() {
+  const settings = useSettings()
+
   return (
     <footer className="bg-[#050505] border-t border-white/5">
       <div className="container-custom py-16">
@@ -40,7 +60,7 @@ export default function Footer() {
             </p>
             <div className="flex gap-3">
               <a
-                href="https://wa.me/79000000000"
+                href={`https://wa.me/${toDigits(settings.whatsapp)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 bg-[#25D366]/10 border border-[#25D366]/20 rounded-lg flex items-center justify-center text-[#25D366] hover:bg-[#25D366]/20 transition-colors"
@@ -49,7 +69,7 @@ export default function Footer() {
                 <MessageCircle className="w-4 h-4" />
               </a>
               <a
-                href="https://t.me/briket_beri"
+                href={telegramUrl(settings.telegram)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 bg-[#0088cc]/10 border border-[#0088cc]/20 rounded-lg flex items-center justify-center text-[#0088cc] hover:bg-[#0088cc]/20 transition-colors"
@@ -58,16 +78,16 @@ export default function Footer() {
                 <Send className="w-4 h-4" />
               </a>
               <a
-                href="https://max.ru/briket_beri"
+                href={maxUrl(settings.max)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 bg-[#FF6B35]/10 border border-[#FF6B35]/20 rounded-lg flex items-center justify-center text-[#FF6B35] hover:bg-[#FF6B35]/20 transition-colors"
                 aria-label="MAX"
               >
-                <MessagesSquare className="w-4 h-4" />
+                <span className="text-sm font-extrabold leading-none">M</span>
               </a>
               <a
-                href="tel:+79000000000"
+                href={`tel:+${toDigits(settings.phone)}`}
                 className="w-10 h-10 bg-brand-orange/10 border border-brand-orange/20 rounded-lg flex items-center justify-center text-brand-orange hover:bg-brand-orange/20 transition-colors"
                 aria-label="Телефон"
               >
@@ -109,20 +129,20 @@ export default function Footer() {
             <h3 className="font-semibold text-white mb-4 text-sm uppercase tracking-wider">Контакты</h3>
             <ul className="space-y-3">
               <li>
-                <a href="tel:+79000000000" className="flex items-center gap-2.5 text-white/50 hover:text-white text-sm transition-colors">
+                <a href={`tel:+${toDigits(settings.phone)}`} className="flex items-center gap-2.5 text-white/50 hover:text-white text-sm transition-colors">
                   <Phone className="w-4 h-4 text-brand-orange flex-shrink-0" />
-                  +7 (900) 000-00-00
+                  {settings.phone}
                 </a>
               </li>
               <li>
-                <a href="mailto:info@briket-berry.ru" className="flex items-center gap-2.5 text-white/50 hover:text-white text-sm transition-colors">
+                <a href={`mailto:${settings.email}`} className="flex items-center gap-2.5 text-white/50 hover:text-white text-sm transition-colors">
                   <Mail className="w-4 h-4 text-brand-orange flex-shrink-0" />
-                  info@briket-berry.ru
+                  {settings.email}
                 </a>
               </li>
               <li className="flex items-start gap-2.5 text-white/50 text-sm">
                 <MapPin className="w-4 h-4 text-brand-orange flex-shrink-0 mt-0.5" />
-                <span>Москва · Пн–Пт 10:00 – 18:00</span>
+                <span>{settings.address}</span>
               </li>
             </ul>
           </div>

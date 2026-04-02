@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { Plus, Edit2, Trash2, Eye, EyeOff, Star } from 'lucide-react'
+import { Plus, Edit2, Trash2, Eye, EyeOff, Star, X } from 'lucide-react'
 import clsx from 'clsx'
 
 interface Review {
@@ -16,6 +17,12 @@ interface Review {
 
 export default function AdminReviewsPage() {
   const queryClient = useQueryClient()
+  const [showForm, setShowForm] = useState(false)
+  const [formAuthorName, setFormAuthorName] = useState('')
+  const [formAuthorTitle, setFormAuthorTitle] = useState('')
+  const [formRating, setFormRating] = useState(5)
+  const [formText, setFormText] = useState('')
+  const [formPublished, setFormPublished] = useState(false)
 
   const { data } = useQuery({
     queryKey: ['admin-reviews'],
@@ -34,6 +41,35 @@ export default function AdminReviewsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-reviews'] }),
   })
 
+  const createReview = useMutation({
+    mutationFn: (data: Record<string, unknown>) =>
+      axios.post('/api/v1/reviews', data, { withCredentials: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-reviews'] })
+      resetForm()
+    },
+  })
+
+  function resetForm() {
+    setShowForm(false)
+    setFormAuthorName('')
+    setFormAuthorTitle('')
+    setFormRating(5)
+    setFormText('')
+    setFormPublished(false)
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    createReview.mutate({
+      authorName: formAuthorName,
+      authorTitle: formAuthorTitle,
+      rating: formRating,
+      text: formText,
+      published: formPublished,
+    })
+  }
+
   const reviews = data || []
 
   return (
@@ -43,11 +79,63 @@ export default function AdminReviewsPage() {
           <h1 className="font-display font-bold text-2xl text-white">Отзывы</h1>
           <p className="text-white/40 text-sm">Управление отзывами клиентов</p>
         </div>
-        <button className="btn-primary py-2.5 px-4 text-sm">
+        <button onClick={() => setShowForm((v) => !v)} className="btn-primary py-2.5 px-4 text-sm">
           <Plus className="w-4 h-4" />
           Добавить отзыв
         </button>
       </div>
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className="card p-5 space-y-4 bg-[#111111] border border-white/5 rounded-xl">
+          <div className="flex items-center justify-between">
+            <h2 className="text-white font-medium text-sm">Новый отзыв</h2>
+            <button type="button" onClick={resetForm} className="p-1 text-white/30 hover:text-white transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-white/40 text-xs">Имя автора</label>
+              <input value={formAuthorName} onChange={(e) => setFormAuthorName(e.target.value)} required
+                className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20" placeholder="Иван Петров" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-white/40 text-xs">Компания / Город</label>
+              <input value={formAuthorTitle} onChange={(e) => setFormAuthorTitle(e.target.value)}
+                className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20" placeholder="ООО Ресторан, Москва" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-white/40 text-xs">Рейтинг</label>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button key={n} type="button" onClick={() => setFormRating(n)}
+                    className={clsx('p-1 transition-colors', n <= formRating ? 'text-brand-gold' : 'text-white/10 hover:text-white/30')}>
+                    <Star className={clsx('w-5 h-5', n <= formRating && 'fill-brand-gold')} />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1.5 flex items-end">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={formPublished} onChange={(e) => setFormPublished(e.target.checked)}
+                  className="w-4 h-4 rounded border-white/10 bg-[#0D0D0D] accent-brand-orange" />
+                <span className="text-white/40 text-xs">Опубликовать сразу</span>
+              </label>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-white/40 text-xs">Текст отзыва</label>
+            <textarea value={formText} onChange={(e) => setFormText(e.target.value)} required rows={3}
+              className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20 resize-none" placeholder="Текст отзыва..." />
+          </div>
+          <div className="flex gap-3 justify-end">
+            <button type="button" onClick={resetForm} className="px-4 py-2 text-white/40 hover:text-white text-sm transition-colors">Отмена</button>
+            <button type="submit" disabled={createReview.isPending} className="btn-primary py-2 px-5 text-sm">
+              {createReview.isPending ? 'Сохранение...' : 'Создать отзыв'}
+            </button>
+          </div>
+        </form>
+      )}
 
       <div className="card overflow-hidden">
         <table className="w-full">
@@ -64,14 +152,14 @@ export default function AdminReviewsPage() {
                 <td className="px-4 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-brand-orange/20 flex items-center justify-center text-brand-orange font-bold text-sm flex-shrink-0 overflow-hidden">
-                      {review.photo
-                        ? <img src={review.photo} alt={review.name} className="w-full h-full object-cover" />
-                        : review.name?.[0]
+                      {review.authorPhoto
+                        ? <img src={review.authorPhoto} alt={review.authorName} className="w-full h-full object-cover" />
+                        : review.authorName?.[0]
                       }
                     </div>
                     <div>
-                      <div className="text-white text-sm">{review.name}</div>
-                      <div className="text-white/30 text-xs">{review.company} · {review.city}</div>
+                      <div className="text-white text-sm">{review.authorName}</div>
+                      <div className="text-white/30 text-xs">{review.authorTitle || ''}</div>
                     </div>
                   </div>
                 </td>

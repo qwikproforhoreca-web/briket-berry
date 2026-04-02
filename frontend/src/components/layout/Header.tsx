@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Phone } from 'lucide-react'
 import clsx from 'clsx'
 import FlameLogo from '@/components/ui/Flamelogo'
+import { useSettings } from '@/hooks/useSettings'
 
 const navLinks = [
   { href: '/', label: 'Главная' },
@@ -18,6 +19,9 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const { pathname } = useLocation()
+  const settings = useSettings()
+
+  const phoneTel = `tel:+${settings.phone.replace(/\D/g, '')}`
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50)
@@ -74,11 +78,11 @@ export default function Header() {
         {/* Right actions */}
         <div className="hidden lg:flex items-center gap-4">
           <a
-            href="tel:+79000000000"
+            href={phoneTel}
             className="flex items-center gap-2 text-white/70 hover:text-white transition-colors text-sm"
           >
             <Phone className="w-4 h-4 text-brand-orange" />
-            <span>+7 (900) 000-00-00</span>
+            <span>{settings.phone}</span>
           </a>
           <Link to="/order" className="btn-primary py-2.5 px-5 text-sm">
             Оставить заявку
@@ -122,11 +126,11 @@ export default function Header() {
               ))}
               <div className="pt-3 border-t border-white/5 space-y-3">
                 <a
-                  href="tel:+79000000000"
+                  href={phoneTel}
                   className="flex items-center gap-2 px-4 text-white/70 text-sm"
                 >
                   <Phone className="w-4 h-4 text-brand-orange" />
-                  +7 (900) 000-00-00
+                  {settings.phone}
                 </a>
                 <Link to="/order" className="btn-primary w-full text-center text-sm py-3">
                   Оставить заявку

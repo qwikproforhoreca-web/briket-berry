@@ -13,6 +13,8 @@ const ComparisonPage = lazy(() => import('@/pages/ComparisonPage'))
 const ReviewsPage = lazy(() => import('@/pages/ReviewsPage'))
 const OrderPage = lazy(() => import('@/pages/OrderPage'))
 const OrderSuccessPage = lazy(() => import('@/pages/OrderSuccessPage'))
+const PrivacyPage = lazy(() => import('@/pages/PrivacyPage'))
+const TermsPage = lazy(() => import('@/pages/TermsPage'))
 const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage'))
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'))
 const AdminOrdersPage = lazy(() => import('@/pages/admin/AdminOrdersPage'))
@@ -36,6 +38,8 @@ export default function App() {
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/order" element={<OrderPage />} />
             <Route path="/order/success" element={<OrderSuccessPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
           </Route>
 
           {/* Admin Routes */}

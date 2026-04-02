@@ -7,21 +7,21 @@ const router = Router()
 
 // Public settings keys that can be exposed
 const PUBLIC_KEYS = [
-  'site.name', 'site.phone', 'site.whatsapp', 'site.telegram',
+  'site.name', 'site.phone', 'site.whatsapp', 'site.telegram', 'site.max',
   'site.email', 'site.address', 'hero.videoUrl', 'tutorial.videoUrl',
   'ai.enabled', 'ai.botName',
 ]
 
 // GET /api/v1/settings - Public
 router.get('/', async (_req: Request, res: Response) => {
-  const settings = await prisma.setting.findMany({
-    where: { key: { in: PUBLIC_KEYS } },
-  })
-  const map = settings.reduce((acc: Record<string, string>, s) => {
-    acc[s.key] = s.value
-    return acc
-  }, {})
-  return successResponse(res, map)
+  try {
+    const settings = await prisma.setting.findMany({
+      where: { key: { in: PUBLIC_KEYS } },
+    })
+    return successResponse(res, settings)
+  } catch {
+    return successResponse(res, [])
+  }
 })
 
 // GET /api/v1/settings/all - Admin
