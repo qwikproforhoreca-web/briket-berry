@@ -55,6 +55,25 @@ enum ProductCategory {
   ACCESSORIES
 }
 
+/// База клиентов (CRM): контакты для менеджеров, не связаны напрямую с заявками
+model Client {
+  id                String            @id @default(uuid())
+  name              String
+  phone             String            @unique
+  email             String?
+  establishment     String
+  establishmentType EstablishmentType
+  city              String
+  inn               String?
+  organizationName  String?
+  notes             String?           @db.Text
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([createdAt])
+  @@map("crm_clients")
+}
+
 model Order {
   id                String            @id @default(uuid())
   orderNumber       String            @unique

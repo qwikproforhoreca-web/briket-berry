@@ -12,6 +12,7 @@ dotenv.config()
 import { prisma } from './utils/prisma'
 import { generalLimiter } from './middleware/rateLimiter'
 import ordersRouter from './routes/orders'
+import clientsRouter from './routes/clients'
 import productsRouter from './routes/products'
 import reviewsRouter from './routes/reviews'
 import paymentRouter from './routes/payment'
@@ -70,6 +71,7 @@ app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')))
 
 // Routes
 app.use('/api/v1/orders', ordersRouter)
+app.use('/api/v1/clients', clientsRouter)
 app.use('/api/v1/products', productsRouter)
 app.use('/api/v1/reviews', reviewsRouter)
 app.use('/api/v1/payment', paymentRouter)
