@@ -22,6 +22,9 @@ import aiRouter from './routes/ai'
 const app = express()
 const PORT = process.env.PORT || 5000
 
+// Trust Railway/Nginx proxy
+app.set('trust proxy', 1)
+
 // Security
 app.use(helmet({
   contentSecurityPolicy: false, // configured separately for prod
