@@ -171,21 +171,9 @@ async function initDefaultProducts() {
       defaults.map((p) =>
         prisma.product.upsert({
           where: { sku: p.sku },
-          update: {
-            slug: p.slug,
-            name: p.name,
-            description: p.description,
-            shortDesc: p.shortDesc,
-            price: p.price,
-            ...(typeof p.priceWholesale === 'number' ? { priceWholesale: p.priceWholesale } : {}),
-            wholesaleMin: p.wholesaleMin,
-            weight: p.weight,
-            category: p.category,
-            inStock: p.inStock,
-            featured: p.featured,
-            images: [...p.images],
-            specs: p.specs as any,
-          },
+          // Не перезаписываем данные, если товар уже есть.
+          // Инициализация нужна только для первого старта (когда в БД пусто).
+          update: {},
           create: {
             slug: p.slug,
             sku: p.sku,
