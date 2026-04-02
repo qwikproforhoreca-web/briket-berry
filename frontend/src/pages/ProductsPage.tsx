@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Check, ArrowRight, Calculator } from 'lucide-react'
+import { Check, ArrowRight, Calculator, Minus, Plus } from 'lucide-react'
 import clsx from 'clsx'
 import axios from 'axios'
 import { useQuery } from '@tanstack/react-query'
@@ -38,6 +38,121 @@ const categories = [
   { id: 'firestarters', label: '🌿 Розжиг' },
 ]
 
+function clampInt(n: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, Math.round(n)))
+}
+
+function ruBoxesWord(n: number): string {
+  const n100 = Math.abs(n) % 100
+  if (n100 > 10 && n100 < 15) return 'ящиков'
+  const n10 = n % 10
+  if (n10 === 1) return 'ящик'
+  if (n10 >= 2 && n10 <= 4) return 'ящика'
+  return 'ящиков'
+}
+
+type CalcFieldProps = {
+  id: string
+  label: string
+  hint?: string
+  value: number
+  onChange: (n: number) => void
+  min: number
+  max: number
+}
+
+/**
+ * Отдельный контрол: строка в фокусе (можно стереть и набрать заново),
+ * число в родителе — без Number('') === 0 при пустом поле.
+ */
+function CalcField({ id, label, hint, value, onChange, min, max }: CalcFieldProps) {
+  const [text, setText] = useState(String(value))
+  const focused = useRef(false)
+
+  useEffect(() => {
+    if (!focused.current) setText(String(value))
+  }, [value])
+
+  const commit = (raw: string) => {
+    if (raw === '') {
+      onChange(value)
+      setText(String(value))
+      return
+    }
+    const n = parseInt(raw, 10)
+    if (Number.isNaN(n)) {
+      setText(String(value))
+      return
+    }
+    const c = clampInt(n, min, max)
+    onChange(c)
+    setText(String(c))
+  }
+
+  const bump = (delta: number) => {
+    const c = clampInt(value + delta, min, max)
+    onChange(c)
+    setText(String(c))
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-col gap-0.5">
+        <label htmlFor={id} className="text-white/80 text-sm font-medium tracking-tight">
+          {label}
+        </label>
+        {hint ? <p className="text-white/35 text-xs leading-snug">{hint}</p> : null}
+      </div>
+      <div className="flex items-stretch gap-2">
+        <button
+          type="button"
+          aria-label={`Уменьшить ${label}`}
+          disabled={value <= min}
+          onClick={() => bump(-1)}
+          className="shrink-0 w-11 min-h-[48px] rounded-xl border border-white/10 bg-white/[0.06] text-white/70 hover:text-white hover:bg-white/[0.1] hover:border-brand-orange/30 active:scale-[0.98] transition flex items-center justify-center disabled:opacity-35 disabled:pointer-events-none"
+        >
+          <Minus className="w-4 h-4" strokeWidth={2.5} />
+        </button>
+        <input
+          id={id}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="off"
+          value={text}
+          onFocus={() => {
+            focused.current = true
+          }}
+          onBlur={() => {
+            focused.current = false
+            commit(text.trim())
+          }}
+          onChange={(e) => {
+            const next = e.target.value.replace(/\D/g, '')
+            setText(next)
+            if (next === '') return
+            const n = parseInt(next, 10)
+            if (!Number.isNaN(n)) onChange(clampInt(n, min, max))
+          }}
+          className="input-field min-h-[48px] text-center text-lg font-semibold tabular-nums tracking-tight flex-1 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        />
+        <button
+          type="button"
+          aria-label={`Увеличить ${label}`}
+          disabled={value >= max}
+          onClick={() => bump(1)}
+          className="shrink-0 w-11 min-h-[48px] rounded-xl border border-white/10 bg-white/[0.06] text-white/70 hover:text-white hover:bg-white/[0.1] hover:border-brand-orange/30 active:scale-[0.98] transition flex items-center justify-center disabled:opacity-35 disabled:pointer-events-none"
+        >
+          <Plus className="w-4 h-4" strokeWidth={2.5} />
+        </button>
+      </div>
+      <p className="text-white/25 text-[11px]">
+        Диапазон: {min}–{max}
+      </p>
+    </div>
+  )
+}
+
 function ConsumptionCalculator() {
   const [workers, setWorkers] = useState(1)
   const [hours, setHours] = useState(8)
@@ -45,60 +160,102 @@ function ConsumptionCalculator() {
 
   const kgPerDay = workers * 1.5 * (hours / 6)
   const kgPerMonth = kgPerDay * days
-  const boxesMonth = Math.ceil(kgPerMonth / 10)
+  const boxesMonth = Math.max(1, Math.ceil(kgPerMonth / 10))
 
   return (
-    <div className="card p-8 mt-12">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-brand-orange/15 rounded-xl flex items-center justify-center">
-          <Calculator className="w-5 h-5 text-brand-orange" />
-        </div>
-        <div>
-          <h3 className="font-bold text-white text-lg">Калькулятор расхода</h3>
-          <p className="text-white/40 text-sm">Рассчитайте объём для вашего заведения</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-        {[
-          { label: 'Хосперов / мангалов', value: workers, onChange: setWorkers, min: 1, max: 10 },
-          { label: 'Рабочих часов в день', value: hours, onChange: setHours, min: 4, max: 16 },
-          { label: 'Рабочих дней в месяц', value: days, onChange: setDays, min: 15, max: 31 },
-        ].map((field) => (
-          <div key={field.label}>
-            <label className="text-white/60 text-sm mb-2 block">{field.label}</label>
-            <input
-              type="number"
-              value={field.value}
-              onChange={(e) => field.onChange(Number(e.target.value))}
-              min={field.min}
-              max={field.max}
-              className="input-field"
-            />
+    <section
+      className="relative z-10 mt-12 sm:mt-16 max-w-4xl mx-auto rounded-2xl border border-brand-orange/25 bg-gradient-to-b from-[#141414] to-[#0D0D0D] shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_24px_48px_rgba(0,0,0,0.45)] overflow-hidden"
+      aria-labelledby="consumption-calculator-heading"
+    >
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-orange/40 to-transparent" />
+      <div className="p-5 sm:p-8 lg:p-10">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6 mb-8 sm:mb-10">
+          <div className="w-12 h-12 shrink-0 bg-brand-orange/15 rounded-2xl flex items-center justify-center ring-1 ring-brand-orange/20">
+            <Calculator className="w-6 h-6 text-brand-orange" strokeWidth={2} />
           </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: 'кг в день', value: kgPerDay.toFixed(1) },
-          { label: 'кг в месяц', value: Math.ceil(kgPerMonth) },
-          { label: 'ящиков (10 кг)', value: boxesMonth },
-        ].map((result) => (
-          <div key={result.label} className="bg-[#111111] rounded-xl p-4 text-center border border-white/5">
-            <div className="font-display font-bold text-3xl gradient-text">{result.value}</div>
-            <div className="text-white/40 text-xs mt-1">{result.label}</div>
+          <div className="min-w-0">
+            <h3
+              id="consumption-calculator-heading"
+              className="font-display font-bold text-white text-xl sm:text-2xl tracking-tight"
+            >
+              Калькулятор расхода
+            </h3>
+            <p className="text-white/45 text-sm sm:text-base mt-1.5 leading-relaxed max-w-xl">
+              Оценка по типовой нагрузке: ~1,5 кг брикетов на единицу за 6 ч работы. Подберите параметры — ниже появится ориентир по закупке.
+            </p>
           </div>
-        ))}
-      </div>
+        </div>
 
-      <div className="mt-6 text-center">
-        <Link to="/order" className="btn-primary">
-          Оформить заявку на {boxesMonth} ящиков
-          <ArrowRight className="w-4 h-4" />
-        </Link>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-10">
+          <CalcField
+            id="calc-workers"
+            label="Хосперов / мангалов"
+            hint="Количество точек, где одновременно жарят на угле"
+            value={workers}
+            onChange={setWorkers}
+            min={1}
+            max={10}
+          />
+          <CalcField
+            id="calc-hours"
+            label="Рабочих часов в день"
+            hint="Средняя длительность смены с горящим углём"
+            value={hours}
+            onChange={setHours}
+            min={4}
+            max={16}
+          />
+          <CalcField
+            id="calc-days"
+            label="Рабочих дней в месяц"
+            hint="Без выходных и простоев печи"
+            value={days}
+            onChange={setDays}
+            min={15}
+            max={31}
+          />
+        </div>
+
+        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8" />
+
+        <p className="text-white/40 text-xs font-medium uppercase tracking-wider mb-4">Ориентировочный расход</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          {[
+            { label: 'В день', sub: 'брикетов Pini Kay', value: `${kgPerDay.toFixed(1)} кг` },
+            { label: 'В месяц', sub: 'суммарно', value: `${Math.ceil(kgPerMonth)} кг` },
+            { label: 'Ящиков', sub: 'по 10 кг', value: String(boxesMonth) },
+          ].map((row) => (
+            <div
+              key={row.label}
+              className="group relative rounded-xl border border-white/[0.08] bg-[#0A0A0A]/90 px-4 py-4 sm:py-5 text-center sm:text-left ring-0 transition hover:border-brand-orange/25 hover:bg-[#0C0C0C]"
+            >
+              <div className="flex sm:flex-col items-center justify-between sm:items-stretch gap-3 sm:gap-1">
+                <div className="text-left min-w-0">
+                  <div className="text-white/50 text-xs font-medium">{row.label}</div>
+                  <div className="text-white/30 text-[11px] mt-0.5 hidden sm:block">{row.sub}</div>
+                </div>
+                <div className="font-display font-bold text-2xl sm:text-3xl text-brand-orange tabular-nums shrink-0">
+                  {row.value}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row sm:items-center sm:justify-center gap-4">
+          <Link
+            to="/order"
+            className="btn-primary w-full sm:w-auto justify-center min-h-[52px] text-base px-8 shadow-lg shadow-brand-orange/10"
+          >
+            Оформить заявку на {boxesMonth} {ruBoxesWord(boxesMonth)}
+            <ArrowRight className="w-5 h-5" />
+          </Link>
+          <p className="text-white/30 text-xs text-center sm:text-left max-w-xs sm:max-w-[220px]">
+            Точный расчёт и опт — после звонка менеджера.
+          </p>
+        </div>
       </div>
-    </div>
+    </section>
   )
 }
 
@@ -290,14 +447,17 @@ export default function ProductsPage() {
                   )}
 
                   {/* Price + CTA */}
-                  <div className="flex items-end justify-between pt-4 border-t border-white/5">
-                    <div>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between pt-4 border-t border-white/5">
+                    <div className="min-w-0">
                       <div className="font-display font-bold text-2xl text-white">{product.price} ₽</div>
-                      <div className="text-white/30 text-xs">
+                      <div className="text-white/30 text-xs mt-0.5">
                         Опт от {product.wholesaleMin} шт: {product.priceWholesale} ₽
                       </div>
                     </div>
-                    <Link to="/order" className="btn-primary py-2.5 px-5 text-sm">
+                    <Link
+                      to="/order"
+                      className="btn-primary py-3 px-5 text-sm w-full sm:w-auto justify-center shrink-0 min-h-[44px]"
+                    >
                       Заказать
                       <ArrowRight className="w-4 h-4" />
                     </Link>
