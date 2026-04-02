@@ -9,6 +9,7 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
+import { prisma } from './utils/prisma'
 import { generalLimiter } from './middleware/rateLimiter'
 import ordersRouter from './routes/orders'
 import productsRouter from './routes/products'
