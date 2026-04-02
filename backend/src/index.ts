@@ -112,10 +112,110 @@ async function initAdmin() {
   }
 }
 
+async function initDefaultProducts() {
+  try {
+    // Базовые товары, чтобы сайт и админка совпадали даже сразу после развертывания.
+    // Если у вас будут другие товары — их можно управлять в админке (создание/редактирование).
+    const defaults = [
+      {
+        sku: 'PKB-10',
+        slug: 'pini-kay-10',
+        category: 'BRIQUETTES',
+        name: 'Угольные брикеты Pini Kay',
+        shortDesc: '10 кг — 1 ящик',
+        description:
+          'Профессиональные угольные брикеты для хосперов, мангалов и гриль-печей. Берёзовая древесина без химических добавок.',
+        price: 890,
+        priceWholesale: 750,
+        wholesaleMin: 20,
+        weight: 10,
+        inStock: true,
+        featured: true,
+        images: ['/images/pini-kay-10.jpg'],
+        specs: {
+          Вес: '10 кг',
+          Форма: 'Шестигранник Pini Kay',
+          'Время горения': 'До 8 часов',
+          'Температура': '900°C+',
+          'Зольность': '< 3%',
+          'Влажность': '< 5%',
+          'Применение': 'Хоспер, мангал, камадо, гриль',
+        },
+      },
+      {
+        sku: 'PFR-8',
+        slug: 'firestarters-8',
+        category: 'FIRESTARTERS',
+        name: 'Парафиновый розжиг',
+        shortDesc: '8 кубиков в упаковке',
+        description:
+          'Натуральный парафиновый розжиг без запаха. Поджигает уголь за 5-7 минут. Без химии.',
+        price: 120,
+        priceWholesale: 90,
+        wholesaleMin: 50,
+        weight: 8,
+        inStock: true,
+        featured: true,
+        images: ['/images/firestarters-8.jpg'],
+        specs: {
+          Количество: '8 кубиков',
+          'Время горения': '10 минут / кубик',
+          'Состав': 'Парафин + прессованные опилки',
+          'Запах': 'Отсутствует',
+          'Применение': 'Уголь, камин, самовар, котёл',
+        },
+      },
+    ] as const
+
+    await Promise.all(
+      defaults.map((p) =>
+        prisma.product.upsert({
+          where: { sku: p.sku },
+          update: {
+            slug: p.slug,
+            name: p.name,
+            description: p.description,
+            shortDesc: p.shortDesc,
+            price: p.price,
+            ...(typeof p.priceWholesale === 'number' ? { priceWholesale: p.priceWholesale } : {}),
+            wholesaleMin: p.wholesaleMin,
+            weight: p.weight,
+            category: p.category,
+            inStock: p.inStock,
+            featured: p.featured,
+            images: [...p.images],
+            specs: p.specs as any,
+          },
+          create: {
+            slug: p.slug,
+            sku: p.sku,
+            category: p.category,
+            name: p.name,
+            shortDesc: p.shortDesc,
+            description: p.description,
+            price: p.price,
+            ...(typeof p.priceWholesale === 'number' ? { priceWholesale: p.priceWholesale } : {}),
+            wholesaleMin: p.wholesaleMin,
+            weight: p.weight,
+            inStock: p.inStock,
+            featured: p.featured,
+            images: [...p.images],
+            specs: p.specs as any,
+          },
+        }),
+      ),
+    )
+    console.log('✅ Default products ready')
+  } catch (e) {
+    console.warn('⚠️ Could not init default products (DB not ready yet):', (e as Error).message)
+  }
+}
+
 app.listen(PORT, async () => {
   console.log(`🔥 Server running on http://localhost:${PORT}`)
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`)
   await initAdmin()
+  await initDefaultProducts()
 })
 
 export default app

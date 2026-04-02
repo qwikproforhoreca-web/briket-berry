@@ -1,60 +1,36 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Check, ArrowRight, Calculator } from 'lucide-react'
 import clsx from 'clsx'
+import axios from 'axios'
+import { useQuery } from '@tanstack/react-query'
 
 type Category = 'all' | 'briquettes' | 'firestarters'
 
-const products = [
-  {
-    id: 'pini-kay-10',
-    category: 'briquettes',
-    name: 'Угольные брикеты Pini Kay',
-    variant: '10 кг',
-    price: 890,
-    priceWholesale: 750,
-    wholesaleMin: 20,
-    sku: 'PKB-10',
-    badge: '🔥 Хит продаж',
-    badgeClass: 'bg-brand-orange/20 text-brand-orange border-brand-orange/30',
-    image: '/images/pini-kay-10.jpg',
-    description: 'Профессиональные угольные брикеты для хосперов, мангалов и гриль-печей. Берёзовая древесина без химических добавок.',
-    features: ['До 8 часов горения', '900°C рабочая температура', 'Без дыма и запаха', 'Зольность < 3%', 'Экологически чистый'],
-    specs: {
-      'Вес': '10 кг',
-      'Форма': 'Шестигранник Pini Kay',
-      'Время горения': 'До 8 часов',
-      'Температура': '900°C+',
-      'Зольность': '< 3%',
-      'Влажность': '< 5%',
-      'Применение': 'Хоспер, мангал, камадо, гриль',
-    },
-  },
-  {
-    id: 'firestarters-8',
-    category: 'firestarters',
-    name: 'Парафиновый розжиг',
-    variant: '8 кубиков',
-    price: 120,
-    priceWholesale: 90,
-    wholesaleMin: 50,
-    sku: 'PFR-8',
-    badge: '🌿 Экологичный',
-    badgeClass: 'bg-green-500/20 text-green-400 border-green-500/30',
-    image: '/images/firestarters-8.jpg',
-    description: 'Натуральный парафиновый розжиг без запаха. Поджигает уголь за 5-7 минут. Без химии.',
-    features: ['10 минут горения кубика', 'Без запаха и токсинов', 'Розжиг за 5-7 минут', 'Можно в сырую погоду', 'Натуральный состав'],
-    specs: {
-      'Количество': '8 кубиков',
-      'Время горения': '10 минут / кубик',
-      'Состав': 'Парафин + прессованные опилки',
-      'Запах': 'Отсутствует',
-      'Применение': 'Уголь, камин, самовар, котёл',
-    },
-  },
-]
+type ApiCategory = 'BRIQUETTES' | 'FIRESTARTERS'
+
+type CatalogCategory = 'briquettes' | 'firestarters'
+
+type CatalogSpecs = Record<string, string>
+
+type CatalogProduct = {
+  id: string
+  category: CatalogCategory
+  name: string
+  variant: string
+  price: number
+  priceWholesale: number
+  wholesaleMin: number
+  sku: string
+  badge: string
+  badgeClass: string
+  image: string
+  description: string
+  features: string[]
+  specs: CatalogSpecs
+}
 
 const categories = [
   { id: 'all', label: 'Все продукты' },
@@ -130,9 +106,64 @@ export default function ProductsPage() {
   const [activeCategory, setActiveCategory] = useState<Category>('all')
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null)
 
-  const filtered = products.filter(
-    (p) => activeCategory === 'all' || p.category === activeCategory
-  )
+  const { data } = useQuery({
+    queryKey: ['products-public'],
+    queryFn: () => axios.get('/api/v1/products', { withCredentials: true }).then((r) => r.data.data),
+  })
+
+  const products: CatalogProduct[] = useMemo(() => {
+    const list = Array.isArray(data) ? (data as any[]) : []
+
+    return list.map((p) => {
+      const apiCategory = String(p.category) as ApiCategory
+      const category: CatalogCategory = apiCategory === 'BRIQUETTES' ? 'briquettes' : 'firestarters'
+
+      const weightNum = Number(p.weight ?? 0)
+      const weightStr = Number.isFinite(weightNum) ? (Number.isInteger(weightNum) ? String(weightNum) : String(weightNum)) : '—'
+      const variant = category === 'briquettes' ? `${weightStr} кг` : `${weightStr} кубиков`
+
+      const specsObj = p.specs && typeof p.specs === 'object' ? p.specs : {}
+      const specs: CatalogSpecs = Object.fromEntries(
+        Object.entries(specsObj).map(([k, v]) => [k, String(v)])
+      )
+
+      const features = Object.values(specs).slice(0, 5)
+
+      const price = Number(p.price ?? 0)
+      const priceWholesale = p.priceWholesale !== null && typeof p.priceWholesale !== 'undefined' ? Number(p.priceWholesale) : 0
+
+      const image = Array.isArray(p.images) && p.images[0] ? String(p.images[0]) : '/images/product-placeholder.jpg'
+
+      const badge =
+        category === 'briquettes'
+          ? p.featured ? '🔥 Хит продаж' : '🔥 Брикеты'
+          : p.featured ? '🌿 Экологичный' : '🌿 Розжиг'
+
+      const badgeClass =
+        category === 'briquettes'
+          ? 'bg-brand-orange/20 text-brand-orange border-brand-orange/30'
+          : 'bg-green-500/20 text-green-400 border-green-500/30'
+
+      return {
+        id: String(p.id),
+        category,
+        name: String(p.name ?? ''),
+        variant,
+        price,
+        priceWholesale,
+        wholesaleMin: Number(p.wholesaleMin ?? 1),
+        sku: String(p.sku ?? ''),
+        badge,
+        badgeClass,
+        image,
+        description: String(p.description ?? ''),
+        features,
+        specs,
+      }
+    })
+  }, [data])
+
+  const filtered = products.filter((p) => activeCategory === 'all' || p.category === activeCategory)
 
   return (
     <>
