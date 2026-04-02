@@ -45,7 +45,6 @@ const STATIC_NOTIFY_RECIPIENTS = [
 ]
 
 type EmailConfig = {
-  provider: 'smtp' | 'resend'
   smtpHost: string
   smtpPort: number
   smtpUser: string
@@ -69,13 +68,6 @@ function formatRub(value: unknown) {
   return `${toNumber(value).toLocaleString('ru-RU')} ₽`
 }
 
-function parseEmails(raw: string) {
-  return raw
-    .split(',')
-    .map((v) => v.trim())
-    .filter(Boolean)
-}
-
 async function loadEmailConfig(): Promise<EmailConfig> {
   const settings = await prisma.setting.findMany({
     where: { key: { in: [...EMAIL_KEYS] } },
@@ -86,50 +78,12 @@ async function loadEmailConfig(): Promise<EmailConfig> {
   }, {})
 
   return {
-    // Force SMTP mode (Resend disabled by user request).
-    provider: 'smtp',
     smtpHost: (map['email.smtpHost'] || 'smtp.yandex.ru').trim(),
     smtpPort: Number(map['email.smtpPort'] || 465),
     smtpUser: (map['email.user'] || '').trim(),
     smtpPassword: (map['email.password'] || '').trim(),
     recipients: STATIC_NOTIFY_RECIPIENTS,
     fromName: (map['email.fromName'] || 'Брикет-Бери').trim(),
-  }
-}
-
-function getFromAddress(config: EmailConfig) {
-  return (config.smtpUser || '').trim()
-}
-
-async function sendViaResend(config: EmailConfig, content: EmailContent) {
-  throw new Error('Resend disabled. Use SMTP provider.')
-
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 15000)
-  try {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer disabled',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: `"${config.fromName}" <${getFromAddress(config)}>`,
-        to: config.recipients,
-        subject: content.subject,
-        html: content.html,
-        text: content.text,
-      }),
-      signal: controller.signal,
-    })
-
-    if (!response.ok) {
-      const raw = await response.text()
-      throw new Error(`Resend API ${response.status}: ${raw}`)
-    }
-    return { sent: true as const, provider: 'resend' as const, recipients: config.recipients }
-  } finally {
-    clearTimeout(timeout)
   }
 }
 
@@ -198,8 +152,6 @@ async function sendEmail(config: EmailConfig, content: EmailContent) {
   if (config.recipients.length === 0) {
     return { sent: false as const, reason: 'No recipients configured' as const }
   }
-
-  if (config.provider === 'resend') return sendViaResend(config, content)
   return sendViaSmtp(config, content)
 }
 
