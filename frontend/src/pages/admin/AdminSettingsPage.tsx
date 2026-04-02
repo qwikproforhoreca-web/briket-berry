@@ -34,7 +34,12 @@ export default function AdminSettingsPage() {
   })
 
   const testSmtp = useMutation({
-    mutationFn: () => axios.post('/api/v1/settings/email/test', {}, { withCredentials: true }),
+    mutationFn: () =>
+      axios.post(
+        '/api/v1/settings/email/test',
+        {},
+        { withCredentials: true, timeout: 15000 },
+      ),
     onSuccess: (res) => {
       const recipients = Array.isArray(res.data?.data?.recipients) ? res.data.data.recipients.join(', ') : ''
       setSmtpTestError('')
@@ -43,6 +48,10 @@ export default function AdminSettingsPage() {
     onError: (e: unknown) => {
       const err = e as any
       setSmtpTestMessage('')
+      if (err?.code === 'ECONNABORTED') {
+        setSmtpTestError('SMTP сервер не ответил вовремя (таймаут). Проверьте логин/пароль и доступ к SMTP.')
+        return
+      }
       setSmtpTestError(err?.response?.data?.error?.message || 'Ошибка отправки тестового письма')
     },
   })
@@ -243,6 +252,10 @@ export default function AdminSettingsPage() {
           {activeTab === 'email' && (
             <>
               <h2 className="font-semibold text-white">Настройки Email</h2>
+              <EmailProviderField
+                value={settingsMap['email.provider'] || 'resend'}
+                onSave={(val) => handleSave('email.provider', val)}
+              />
               {[
                 { key: 'email.smtpHost', label: 'SMTP Host', placeholder: 'smtp.mail.ru' },
                 { key: 'email.smtpPort', label: 'SMTP Port', placeholder: '465' },
@@ -274,7 +287,9 @@ export default function AdminSettingsPage() {
                   disabled={testSmtp.isPending}
                   className="btn-secondary py-2 px-4 text-sm"
                 >
-                  {testSmtp.isPending ? 'Отправка теста...' : 'Тест SMTP'}
+                  {testSmtp.isPending
+                    ? 'Отправка теста...'
+                    : `Тест ${settingsMap['email.provider'] === 'smtp' ? 'SMTP' : 'Resend'}`}
                 </button>
                 {smtpTestMessage && (
                   <p className="text-green-400 text-xs mt-2">{smtpTestMessage}</p>
@@ -353,6 +368,29 @@ function NotifyEmailsField({ value, onSave }: { value: string; onSave: (val: str
           className="btn-primary py-2 px-4 text-sm"
         >
           <Plus className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function EmailProviderField({ value, onSave }: { value: string; onSave: (val: 'smtp' | 'resend') => void }) {
+  const [provider, setProvider] = useState<'smtp' | 'resend'>(value === 'smtp' ? 'smtp' : 'resend')
+  return (
+    <div>
+      <label className="text-white/60 text-sm mb-1.5 block">Провайдер отправки</label>
+      <p className="text-white/30 text-xs mb-2">Выберите канал отправки заявок: SMTP или Resend API</p>
+      <div className="flex gap-2">
+        <select
+          value={provider}
+          onChange={(e) => setProvider(e.target.value === 'smtp' ? 'smtp' : 'resend')}
+          className="input-field flex-1"
+        >
+          <option value="resend">Resend (рекомендуется)</option>
+          <option value="smtp">SMTP</option>
+        </select>
+        <button onClick={() => onSave(provider)} className="btn-primary py-3 px-4 text-sm">
+          <Save className="w-4 h-4" />
         </button>
       </div>
     </div>

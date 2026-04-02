@@ -28,6 +28,7 @@ type OrderForEmail = {
 }
 
 const EMAIL_KEYS = [
+  'email.provider',
   'email.smtpHost',
   'email.smtpPort',
   'email.user',
@@ -37,12 +38,19 @@ const EMAIL_KEYS = [
 ] as const
 
 type EmailConfig = {
+  provider: 'smtp' | 'resend'
   smtpHost: string
   smtpPort: number
   smtpUser: string
   smtpPassword: string
   recipients: string[]
   fromName: string
+}
+
+type EmailContent = {
+  subject: string
+  text: string
+  html: string
 }
 
 function toNumber(value: unknown, fallback = 0) {
@@ -71,6 +79,7 @@ async function loadEmailConfig(): Promise<EmailConfig> {
   }, {})
 
   return {
+    provider: (map['email.provider'] === 'smtp' ? 'smtp' : 'resend'),
     smtpHost: (map['email.smtpHost'] || '').trim(),
     smtpPort: Number(map['email.smtpPort'] || 0),
     smtpUser: (map['email.user'] || '').trim(),
@@ -80,23 +89,128 @@ async function loadEmailConfig(): Promise<EmailConfig> {
   }
 }
 
-export async function sendOrderNotificationEmail(order: OrderForEmail) {
-  const { smtpHost, smtpPort, smtpUser, smtpPassword, recipients, fromName } = await loadEmailConfig()
+function getFromAddress(config: EmailConfig) {
+  return (process.env.RESEND_FROM || config.smtpUser || 'onboarding@resend.dev').trim()
+}
 
-  if (!smtpHost || !smtpPort || !smtpUser || !smtpPassword || recipients.length === 0) {
-    console.warn('⚠️ Email notifications skipped: SMTP settings incomplete')
-    return { sent: false, reason: 'SMTP settings incomplete' as const }
+function isResendEnabled() {
+  return Boolean((process.env.RESEND_API_KEY || '').trim())
+}
+
+async function sendViaResend(config: EmailConfig, content: EmailContent) {
+  const apiKey = (process.env.RESEND_API_KEY || '').trim()
+  if (!apiKey) throw new Error('RESEND_API_KEY not set')
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 15000)
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: `"${config.fromName}" <${getFromAddress(config)}>`,
+        to: config.recipients,
+        subject: content.subject,
+        html: content.html,
+        text: content.text,
+      }),
+      signal: controller.signal,
+    })
+
+    if (!response.ok) {
+      const raw = await response.text()
+      throw new Error(`Resend API ${response.status}: ${raw}`)
+    }
+    return { sent: true as const, provider: 'resend' as const, recipients: config.recipients }
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+async function sendViaSmtp(config: EmailConfig, content: EmailContent) {
+  const { smtpHost, smtpPort, smtpUser, smtpPassword } = config
+  if (!smtpHost || !smtpPort || !smtpUser || !smtpPassword) {
+    return { sent: false as const, reason: 'SMTP settings incomplete' as const }
   }
 
-  const transporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpPort === 465,
-    auth: {
-      user: smtpUser,
-      pass: smtpPassword,
-    },
-  })
+  const makeTransporter = (port: number, secure: boolean) =>
+    nodemailer.createTransport({
+      host: smtpHost,
+      port,
+      secure,
+      requireTLS: !secure,
+      connectionTimeout: 12000,
+      greetingTimeout: 12000,
+      socketTimeout: 15000,
+      auth: {
+        user: smtpUser,
+        pass: smtpPassword,
+      },
+    })
+
+  const sendWith = async (port: number, secure: boolean) => {
+    const transporter = makeTransporter(port, secure)
+    await transporter.sendMail({
+      from: `"${config.fromName}" <${smtpUser}>`,
+      to: config.recipients.join(','),
+      subject: content.subject,
+      text: content.text,
+      html: content.html,
+    })
+  }
+
+  const looksLikeYandex = smtpHost.includes('yandex.')
+  try {
+    await sendWith(smtpPort, smtpPort === 465)
+    return { sent: true as const, provider: 'smtp' as const, recipients: config.recipients }
+  } catch (e) {
+    const msg = String((e as Error).message || '')
+    const code = String((e as { code?: string })?.code || '')
+    const timeoutLike =
+      code === 'ETIMEDOUT' || code === 'ESOCKET' || /timed? out|timeout|Greeting never received/i.test(msg)
+
+    // For Yandex SMTP, automatically fallback between 465 (SSL) and 587 (STARTTLS)
+    if (looksLikeYandex && timeoutLike) {
+      const fallbackPort = smtpPort === 465 ? 587 : 465
+      const fallbackSecure = fallbackPort === 465
+      try {
+        await sendWith(fallbackPort, fallbackSecure)
+        console.warn(`⚠️ SMTP fallback used: ${smtpHost}:${smtpPort} -> ${smtpHost}:${fallbackPort}`)
+        return { sent: true as const, provider: 'smtp' as const, recipients: config.recipients }
+      } catch (fallbackError) {
+        throw new Error(
+          `SMTP timeout on ${smtpHost}:${smtpPort} and fallback ${smtpHost}:${fallbackPort}. ${String((fallbackError as Error).message || '')}`,
+        )
+      }
+    }
+
+    throw e
+  }
+}
+
+async function sendEmail(config: EmailConfig, content: EmailContent) {
+  if (config.recipients.length === 0) {
+    return { sent: false as const, reason: 'No recipients configured' as const }
+  }
+
+  if (config.provider === 'resend') {
+    if (!isResendEnabled()) {
+      return { sent: false as const, reason: 'RESEND_API_KEY not set' as const }
+    }
+    return sendViaResend(config, content)
+  }
+  return sendViaSmtp(config, content)
+}
+
+export async function sendOrderNotificationEmail(order: OrderForEmail) {
+  const config = await loadEmailConfig()
+  if (config.recipients.length === 0) {
+    console.warn('⚠️ Email notifications skipped: recipients not configured')
+    return { sent: false as const, reason: 'No recipients configured' as const }
+  }
 
   const paymentLabel = order.paymentMethod === 'ONLINE' ? 'Онлайн' : 'Счёт для юрлиц'
   const itemsHtml = order.items
@@ -166,55 +280,42 @@ export async function sendOrderNotificationEmail(order: OrderForEmail) {
     `Комментарий: ${order.comment || '-'}`,
   ].join('\n')
 
-  await transporter.sendMail({
-    from: `"${fromName}" <${smtpUser}>`,
-    to: recipients.join(','),
+  const content: EmailContent = {
     subject,
     text,
     html,
-  })
+  }
 
-  return { sent: true as const, recipients }
+  return sendEmail(config, content)
 }
 
 export async function sendSmtpTestEmail() {
-  const { smtpHost, smtpPort, smtpUser, smtpPassword, recipients, fromName } = await loadEmailConfig()
-
-  if (!smtpHost || !smtpPort || !smtpUser || !smtpPassword || recipients.length === 0) {
-    return { sent: false as const, reason: 'SMTP settings incomplete' as const }
+  const config = await loadEmailConfig()
+  if (config.recipients.length === 0) {
+    return { sent: false as const, reason: 'No recipients configured' as const }
   }
 
-  const transporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpPort === 465,
-    auth: {
-      user: smtpUser,
-      pass: smtpPassword,
-    },
-  })
-
   const now = new Date()
-  await transporter.sendMail({
-    from: `"${fromName}" <${smtpUser}>`,
-    to: recipients.join(','),
+  const content: EmailContent = {
     subject: `Тест SMTP — Брикет-Бери (${now.toLocaleString('ru-RU')})`,
     text: [
-      'Это тестовое письмо SMTP от briket-berry.ru',
+      config.provider === 'resend' ? 'Это тестовое письмо Resend от briket-berry.ru' : 'Это тестовое письмо SMTP от briket-berry.ru',
       `Дата: ${now.toISOString()}`,
-      `Хост: ${smtpHost}:${smtpPort}`,
-      `Получатели: ${recipients.join(', ')}`,
+      `Провайдер: ${config.provider === 'resend' ? 'Resend' : 'SMTP'}`,
+      config.provider === 'smtp' ? `Хост: ${config.smtpHost}:${config.smtpPort}` : '',
+      `Получатели: ${config.recipients.join(', ')}`,
     ].join('\n'),
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111;">
-        <h3 style="margin:0 0 10px;">Тест SMTP — Брикет-Бери</h3>
+        <h3 style="margin:0 0 10px;">Тест Email — Брикет-Бери</h3>
         <p style="margin:0 0 8px;">Проверка отправки писем выполнена успешно.</p>
+        <p style="margin:0 0 4px;"><b>Провайдер:</b> ${config.provider === 'resend' ? 'Resend' : 'SMTP'}</p>
         <p style="margin:0 0 4px;"><b>Дата:</b> ${now.toLocaleString('ru-RU')}</p>
-        <p style="margin:0 0 4px;"><b>SMTP:</b> ${smtpHost}:${smtpPort}</p>
-        <p style="margin:0;"><b>Получатели:</b> ${recipients.join(', ')}</p>
+        ${config.provider === 'smtp' ? `<p style="margin:0 0 4px;"><b>SMTP:</b> ${config.smtpHost}:${config.smtpPort}</p>` : ''}
+        <p style="margin:0;"><b>Получатели:</b> ${config.recipients.join(', ')}</p>
       </div>
     `,
-  })
+  }
 
-  return { sent: true as const, recipients }
+  return sendEmail(config, content)
 }

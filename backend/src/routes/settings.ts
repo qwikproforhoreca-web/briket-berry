@@ -36,11 +36,11 @@ router.post('/email/test', authMiddleware, async (_req: AuthRequest, res: Respon
   try {
     const result = await sendSmtpTestEmail()
     if (!result.sent) {
-      return errorResponse(res, 400, 'SMTP_INCOMPLETE', 'Заполните SMTP Host/Port/User/Password и email.notifyTo')
+      return errorResponse(res, 400, 'EMAIL_INCOMPLETE', 'Заполните email.notifyTo и настройте SMTP или RESEND_API_KEY')
     }
     return successResponse(res, { sent: true, recipients: result.recipients })
   } catch (e) {
-    return errorResponse(res, 500, 'SMTP_TEST_FAILED', `Не удалось отправить тестовое письмо: ${(e as Error).message}`)
+    return errorResponse(res, 500, 'EMAIL_TEST_FAILED', `Не удалось отправить тестовое письмо: ${(e as Error).message}`)
   }
 })
 
