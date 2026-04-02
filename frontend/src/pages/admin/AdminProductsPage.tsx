@@ -6,12 +6,15 @@ import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight, X } from 'lucide-react'
 interface Product {
   id: string
   name: string
+  shortDesc?: string
   sku: string
   price: number
   priceWholesale?: number
   category: string
   weight?: number
   description?: string
+  specs?: Record<string, string>
+  featured?: boolean
   inStock: boolean
   images?: string[]
 }
@@ -19,6 +22,7 @@ interface Product {
 export default function AdminProductsPage() {
   const queryClient = useQueryClient()
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [serverError, setServerError] = useState('')
   const [formName, setFormName] = useState('')
   const [formSku, setFormSku] = useState('')
@@ -28,6 +32,13 @@ export default function AdminProductsPage() {
   const [formWeight, setFormWeight] = useState('')
   const [formDescription, setFormDescription] = useState('')
   const [formShortDesc, setFormShortDesc] = useState('')
+  // Quick specs for homepage cards (stored in `specs` JSON)
+  const [specTime, setSpecTime] = useState('')
+  const [specTemp, setSpecTemp] = useState('')
+  const [specNoSmoke, setSpecNoSmoke] = useState('')
+  const [specNoChem, setSpecNoChem] = useState('')
+  const [specStarter, setSpecStarter] = useState('')
+  const [formFeatured, setFormFeatured] = useState(false)
   const [formImageFiles, setFormImageFiles] = useState<File[]>([])
   const [isUploadingImages, setIsUploadingImages] = useState(false)
 
@@ -61,6 +72,19 @@ export default function AdminProductsPage() {
     },
   })
 
+  const updateProduct = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      axios.put(`/api/v1/products/${id}`, data, { withCredentials: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] })
+      resetForm()
+    },
+    onError: (e: unknown) => {
+      const err = e as any
+      setServerError(err?.response?.data?.error?.message || 'Ошибка при обновлении продукта')
+    },
+  })
+
   const previewUrls = useMemo(() => {
     return formImageFiles.map((f) => URL.createObjectURL(f))
   }, [formImageFiles])
@@ -72,8 +96,22 @@ export default function AdminProductsPage() {
     }
   }, [previewUrls])
 
+  useEffect(() => {
+    // Defaults for homepage-card characteristics
+    if (formCategory === 'BRIQUETTES') {
+      setSpecTime('До 8 часов горения')
+      setSpecTemp('900°C температура')
+      setSpecNoSmoke('Без дыма и запаха')
+    } else {
+      setSpecTime('10 минут горения')
+      setSpecNoChem('Без химии')
+      setSpecStarter('Розжиг за 5-7 минут')
+    }
+  }, [formCategory])
+
   function resetForm() {
     setShowForm(false)
+    setEditingId(null)
     setServerError('')
     setFormName('')
     setFormSku('')
@@ -83,6 +121,12 @@ export default function AdminProductsPage() {
     setFormWeight('')
     setFormDescription('')
     setFormShortDesc('')
+    setSpecTime('')
+    setSpecTemp('')
+    setSpecNoSmoke('')
+    setSpecNoChem('')
+    setSpecStarter('')
+    setFormFeatured(false)
     setFormImageFiles([])
     setIsUploadingImages(false)
   }
@@ -130,7 +174,23 @@ export default function AdminProductsPage() {
         return
       }
 
-      createProduct.mutate({
+      const specs: Record<string, string> = {}
+      if (formCategory === 'BRIQUETTES') {
+        specs['Время горения'] = specTime.trim() || 'До 8 часов горения'
+        specs['Температура'] = specTemp.trim() || '900°C температура'
+        // Home expects one of these keys (we store both to be safe).
+        const noSmokeValue = specNoSmoke.trim() || 'Без дыма и запаха'
+        specs['Без дыма и запаха'] = noSmokeValue
+        specs['Без дыма и золы'] = noSmokeValue
+      } else {
+        specs['Время горения'] = specTime.trim() || '10 минут горения'
+        specs['Без химии'] = specNoChem.trim() || 'Без химии'
+        specs['Розжиг'] = specStarter.trim() || 'Розжиг за 5-7 минут'
+        specs['Розжиг за 5 минут'] = specStarter.trim() || 'Розжиг за 5-7 минут'
+        specs['Розжиг за 5-7 минут'] = specStarter.trim() || 'Розжиг за 5-7 минут'
+      }
+
+      const payload = {
         name: formName.trim(),
         slug: toSlug(formName),
         sku: formSku.trim(),
@@ -142,10 +202,41 @@ export default function AdminProductsPage() {
         description: formDescription,
         shortDesc,
         images: images.length ? images : [],
-      })
+        specs,
+        featured: formFeatured,
+      }
+
+      if (editingId) {
+        updateProduct.mutate({ id: editingId, data: payload })
+      } else {
+        createProduct.mutate(payload)
+      }
     } finally {
       setIsUploadingImages(false)
     }
+  }
+
+  function startEdit(product: Product) {
+    setShowForm(true)
+    setEditingId(product.id)
+    setServerError('')
+    setFormName(product.name || '')
+    setFormSku(product.sku || '')
+    setFormPrice(String(product.price ?? ''))
+    setFormWholesalePrice(product.priceWholesale ? String(product.priceWholesale) : '')
+    setFormCategory(product.category === 'FIRESTARTERS' ? 'FIRESTARTERS' : 'BRIQUETTES')
+    setFormWeight(typeof product.weight === 'number' ? String(product.weight) : '')
+    setFormDescription(product.description || '')
+    setFormShortDesc(product.shortDesc || '')
+    setFormFeatured(Boolean(product.featured))
+    setFormImageFiles([])
+
+    const specs = product.specs || {}
+    setSpecTime(String(specs['Время горения'] || ''))
+    setSpecTemp(String(specs['Температура'] || ''))
+    setSpecNoSmoke(String(specs['Без дыма и запаха'] || specs['Без дыма и золы'] || ''))
+    setSpecNoChem(String(specs['Без химии'] || ''))
+    setSpecStarter(String(specs['Розжиг'] || specs['Розжиг за 5 минут'] || specs['Розжиг за 5-7 минут'] || ''))
   }
 
   const products = data || []
@@ -157,7 +248,17 @@ export default function AdminProductsPage() {
           <h1 className="font-display font-bold text-2xl text-white">Продукты</h1>
           <p className="text-white/40 text-sm">Управление каталогом</p>
         </div>
-        <button onClick={() => setShowForm((v) => !v)} className="btn-primary py-2.5 px-4 text-sm">
+        <button
+          onClick={() => {
+            if (showForm && !editingId) {
+              setShowForm(false)
+            } else {
+              resetForm()
+              setShowForm(true)
+            }
+          }}
+          className="btn-primary py-2.5 px-4 text-sm"
+        >
           <Plus className="w-4 h-4" />
           Добавить продукт
         </button>
@@ -166,7 +267,7 @@ export default function AdminProductsPage() {
       {showForm && (
         <form onSubmit={handleSubmit} className="card p-5 space-y-4 bg-[#111111] border border-white/5 rounded-xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-white font-medium text-sm">Новый продукт</h2>
+            <h2 className="text-white font-medium text-sm">{editingId ? 'Редактирование продукта' : 'Новый продукт'}</h2>
             <button type="button" onClick={resetForm} className="p-1 text-white/30 hover:text-white transition-colors">
               <X className="w-4 h-4" />
             </button>
@@ -221,6 +322,83 @@ export default function AdminProductsPage() {
             />
           </div>
 
+          <label className="flex items-center gap-2 text-white/70 text-sm">
+            <input
+              type="checkbox"
+              checked={formFeatured}
+              onChange={(e) => setFormFeatured(e.target.checked)}
+              className="accent-[#FF6B35]"
+            />
+            Показывать как основной (featured)
+          </label>
+
+          <div className="space-y-1.5">
+            <label className="text-white/40 text-xs">
+              Характеристики (для главной карточки)
+            </label>
+            {formCategory === 'BRIQUETTES' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-white/40 text-xs">Время горения</label>
+                  <input
+                    value={specTime}
+                    onChange={(e) => setSpecTime(e.target.value)}
+                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20"
+                    placeholder="До 8 часов горения"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-white/40 text-xs">Температура</label>
+                  <input
+                    value={specTemp}
+                    onChange={(e) => setSpecTemp(e.target.value)}
+                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20"
+                    placeholder="900°C температура"
+                  />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <label className="text-white/40 text-xs">Без дыма / запаха</label>
+                  <input
+                    value={specNoSmoke}
+                    onChange={(e) => setSpecNoSmoke(e.target.value)}
+                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20"
+                    placeholder="Без дыма и запаха"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-white/40 text-xs">Время горения</label>
+                  <input
+                    value={specTime}
+                    onChange={(e) => setSpecTime(e.target.value)}
+                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20"
+                    placeholder="10 минут горения"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-white/40 text-xs">Без химии</label>
+                  <input
+                    value={specNoChem}
+                    onChange={(e) => setSpecNoChem(e.target.value)}
+                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20"
+                    placeholder="Без химии"
+                  />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <label className="text-white/40 text-xs">Розжиг (срок)</label>
+                  <input
+                    value={specStarter}
+                    onChange={(e) => setSpecStarter(e.target.value)}
+                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20"
+                    placeholder="Розжиг за 5-7 минут"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="space-y-1.5">
             <label className="text-white/40 text-xs">Фото товара</label>
             <input
@@ -239,14 +417,25 @@ export default function AdminProductsPage() {
               </div>
             )}
           </div>
+          {serverError && (
+            <div className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+              {serverError}
+            </div>
+          )}
           <div className="flex gap-3 justify-end">
             <button type="button" onClick={resetForm} className="px-4 py-2 text-white/40 hover:text-white text-sm transition-colors">Отмена</button>
             <button
               type="submit"
-              disabled={createProduct.isPending || isUploadingImages}
+              disabled={createProduct.isPending || updateProduct.isPending || isUploadingImages}
               className="btn-primary py-2 px-5 text-sm"
             >
-              {createProduct.isPending ? 'Сохранение...' : isUploadingImages ? 'Загрузка фото...' : 'Создать продукт'}
+              {createProduct.isPending || updateProduct.isPending
+                ? 'Сохранение...'
+                : isUploadingImages
+                  ? 'Загрузка фото...'
+                  : editingId
+                    ? 'Сохранить изменения'
+                    : 'Создать продукт'}
             </button>
           </div>
         </form>
@@ -297,7 +486,7 @@ export default function AdminProductsPage() {
                 <td className="px-4 py-4">
                   <div className="flex gap-2">
                     <button
-                      onClick={() => alert(`Редактирование: ${product.name}`)}
+                      onClick={() => startEdit(product)}
                       className="p-1.5 text-white/30 hover:text-white transition-colors"
                       title="Редактировать"
                     >

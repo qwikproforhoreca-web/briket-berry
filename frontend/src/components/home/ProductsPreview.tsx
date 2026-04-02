@@ -1,48 +1,253 @@
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
 import { ArrowRight, Clock, Thermometer, Package } from 'lucide-react'
+import axios from 'axios'
+import { useQuery } from '@tanstack/react-query'
 
-const products = [
-  {
-    id: 'pini-kay-10',
-    name: 'Pini Kay Брикеты',
-    subtitle: '10 кг — 1 ящик',
-    price: 'от 890 ₽',
-    priceWholesale: 'опт от 750 ₽/кг',
-    image: '/images/pini-kay-product.jpg',
-    badge: '🔥 Хит продаж',
-    badgeColor: 'bg-brand-orange/20 text-brand-orange border-brand-orange/30',
-    features: [
-      { icon: Clock, text: 'До 8 часов горения' },
-      { icon: Thermometer, text: '900°C температура' },
-      { icon: Package, text: 'Без дыма и золы' },
-    ],
-    href: '/products',
-    gradient: 'from-brand-orange/20 to-transparent',
-  },
-  {
-    id: 'firestarters',
-    name: 'Парафиновый розжиг',
-    subtitle: '8 кубиков в упаковке',
-    price: 'от 120 ₽',
-    priceWholesale: 'опт: скидка 30%',
-    image: '/images/firestarters-product.jpg',
-    badge: '✨ Экологичный',
-    badgeColor: 'bg-green-500/20 text-green-400 border-green-500/30',
-    features: [
-      { icon: Clock, text: '10 минут горения' },
-      { icon: Thermometer, text: 'Без химии' },
-      { icon: Package, text: 'Розжиг за 5 минут' },
-    ],
-    href: '/products',
-    gradient: 'from-green-500/10 to-transparent',
-  },
-]
+type ApiProductCategory = 'BRIQUETTES' | 'FIRESTARTERS'
+type CatalogCategory = 'briquettes' | 'firestarters'
+
+type ApiProduct = {
+  id: string
+  name: string
+  category: ApiProductCategory
+  price: number
+  priceWholesale?: number | null
+  wholesaleMin?: number | null
+  weight?: number | null
+  sku?: string
+  description?: string
+  images?: string[]
+  specs?: Record<string, unknown>
+  featured?: boolean
+  sortOrder?: number | null
+  createdAt?: string
+  inStock?: boolean
+}
+
+function toNum(v: unknown) {
+  const n = Number(v)
+  return Number.isFinite(n) ? n : undefined
+}
+
+function formatWeight(value: unknown) {
+  const n = toNum(value)
+  if (typeof n !== 'number') return '—'
+  return Number.isInteger(n) ? String(n) : String(n)
+}
+
+function pickTopProduct(list: ApiProduct[], desiredCategory: ApiProductCategory): ApiProduct | undefined {
+  const items = list.filter((p) => p.category === desiredCategory)
+  if (!items.length) return undefined
+
+  // Sort: featured first, then sortOrder asc, then createdAt desc.
+  return items
+    .slice()
+    .sort((a, b) => {
+      const feat = Number(Boolean(b.featured)) - Number(Boolean(a.featured))
+      if (feat !== 0) return feat
+      const so = Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0)
+      if (so !== 0) return so
+      const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return tb - ta
+    })
+    .find((p) => p.inStock !== false) ?? items[0]
+}
+
+function getSpecsValue(specs: ApiProduct['specs'] | undefined, key: string, fallback: string) {
+  if (!specs) return fallback
+  const v = specs[key]
+  if (v === null || typeof v === 'undefined') return fallback
+  const s = String(v).trim()
+  return s ? s : fallback
+}
 
 export default function ProductsPreview() {
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
+
+  const { data } = useQuery({
+    queryKey: ['products-public'],
+    queryFn: () => axios.get('/api/v1/products', { withCredentials: true }).then((r) => r.data.data),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const cards = useMemo(() => {
+    const list: ApiProduct[] = Array.isArray(data) ? (data as ApiProduct[]) : []
+
+    const briquettes = pickTopProduct(list, 'BRIQUETTES')
+    const firestarters = pickTopProduct(list, 'FIRESTARTERS')
+
+    const makeCard = (p: ApiProduct, category: CatalogCategory) => {
+      const specs = p.specs
+      const image = Array.isArray(p.images) && p.images[0] ? String(p.images[0]) : '/images/product-placeholder.jpg'
+
+      const badge =
+        category === 'briquettes'
+          ? p.featured ? '🔥 Хит продаж' : '🔥 Брикеты'
+          : p.featured ? '✨ Экологичный' : '🌿 Розжиг'
+
+      const badgeColor =
+        category === 'briquettes'
+          ? 'bg-brand-orange/20 text-brand-orange border-brand-orange/30'
+          : 'bg-green-500/20 text-green-400 border-green-500/30'
+
+      const subtitle = category === 'briquettes'
+        ? `${formatWeight(p.weight)} кг — 1 ящик`
+        : `${formatWeight(p.weight)} кубиков в упаковке`
+
+      const priceText = `от ${Math.round(Number(p.price ?? 0))} ₽`
+      const priceWholesale =
+        typeof p.priceWholesale === 'number'
+          ? category === 'briquettes'
+            ? `опт от ${Math.round(Number(p.priceWholesale))} ₽/кг`
+            : `опт от ${Math.round(Number(p.priceWholesale))} ₽`
+          : 'опт по запросу'
+
+      const features =
+        category === 'briquettes'
+          ? [
+              { icon: Clock, text: getSpecsValue(specs, 'Время горения', 'До 8 часов горения') },
+              { icon: Thermometer, text: getSpecsValue(specs, 'Температура', '900°C температура') },
+              {
+                icon: Package,
+                text:
+                  getSpecsValue(specs, 'Без дыма и запаха', '').trim()
+                    || getSpecsValue(specs, 'Без дыма и золы', '').trim()
+                    || 'Без дыма и запаха',
+              },
+            ]
+          : [
+              { icon: Clock, text: getSpecsValue(specs, 'Время горения', '10 минут горения') },
+              { icon: Thermometer, text: getSpecsValue(specs, 'Без химии', 'Без химии') },
+              {
+                icon: Package,
+                text:
+                  getSpecsValue(specs, 'Розжиг', '').trim()
+                    || getSpecsValue(specs, 'Розжиг за 5 минут', '').trim()
+                    || getSpecsValue(specs, 'Розжиг за 5-7 минут', '').trim()
+                    || 'Розжиг за 5-7 минут',
+              },
+            ]
+
+      const gradient = category === 'briquettes' ? 'from-brand-orange/20 to-transparent' : 'from-green-500/10 to-transparent'
+
+      return {
+        id: p.id,
+        kind: category,
+        name: p.category === 'BRIQUETTES' ? 'Угольные брикеты Pini Kay' : 'Парафиновый розжиг',
+        subtitle,
+        price: priceText,
+        priceWholesale,
+        image,
+        badge,
+        badgeColor,
+        features,
+        href: '/products',
+        gradient,
+      }
+    }
+
+    const result: any[] = []
+    if (briquettes) result.push(makeCard(briquettes, 'briquettes'))
+    if (firestarters) result.push(makeCard(firestarters, 'firestarters'))
+
+    // Если API пока не вернул данные (или в БД пусто), показываем 2 “заглушки”
+    if (!result.length) {
+      return [
+        {
+          id: 'placeholder-briquettes',
+          kind: 'briquettes',
+          name: 'Pini Kay Брикеты',
+          subtitle: '10 кг — 1 ящик',
+          price: 'от 890 ₽',
+          priceWholesale: 'опт от 750 ₽/кг',
+          image: '/images/pini-kay-product.jpg',
+          badge: '🔥 Хит продаж',
+          badgeColor: 'bg-brand-orange/20 text-brand-orange border-brand-orange/30',
+          features: [
+            { icon: Clock, text: 'До 8 часов горения' },
+            { icon: Thermometer, text: '900°C температура' },
+            { icon: Package, text: 'Без дыма и золы' },
+          ],
+          href: '/products',
+          gradient: 'from-brand-orange/20 to-transparent',
+        },
+        {
+          id: 'placeholder-firestarters',
+          kind: 'firestarters',
+          name: 'Парафиновый розжиг',
+          subtitle: '8 кубиков в упаковке',
+          price: 'от 120 ₽',
+          priceWholesale: 'опт: скидка 30%',
+          image: '/images/firestarters-product.jpg',
+          badge: '✨ Экологичный',
+          badgeColor: 'bg-green-500/20 text-green-400 border-green-500/30',
+          features: [
+            { icon: Clock, text: '10 минут горения' },
+            { icon: Thermometer, text: 'Без химии' },
+            { icon: Package, text: 'Розжиг за 5 минут' },
+          ],
+          href: '/products',
+          gradient: 'from-green-500/10 to-transparent',
+        },
+      ]
+    }
+
+    // Если по какой-то причине не хватает одной категории — подставим заглушку, чтобы оставались 2 карточки.
+    if (result.length === 1) {
+      const only = result[0]
+      if (only.kind === 'briquettes') {
+        return [
+          only,
+          {
+            id: 'placeholder-firestarters',
+            kind: 'firestarters',
+            name: 'Парафиновый розжиг',
+            subtitle: '8 кубиков в упаковке',
+            price: 'от 120 ₽',
+            priceWholesale: 'опт: скидка 30%',
+            image: '/images/firestarters-product.jpg',
+            badge: '✨ Экологичный',
+            badgeColor: 'bg-green-500/20 text-green-400 border-green-500/30',
+            features: [
+              { icon: Clock, text: '10 минут горения' },
+              { icon: Thermometer, text: 'Без химии' },
+              { icon: Package, text: 'Розжиг за 5 минут' },
+            ],
+            href: '/products',
+            gradient: 'from-green-500/10 to-transparent',
+          },
+        ]
+      }
+
+      return [
+        {
+          id: 'placeholder-briquettes',
+          kind: 'briquettes',
+          name: 'Pini Kay Брикеты',
+          subtitle: '10 кг — 1 ящик',
+          price: 'от 890 ₽',
+          priceWholesale: 'опт от 750 ₽/кг',
+          image: '/images/pini-kay-product.jpg',
+          badge: '🔥 Хит продаж',
+          badgeColor: 'bg-brand-orange/20 text-brand-orange border-brand-orange/30',
+          features: [
+            { icon: Clock, text: 'До 8 часов горения' },
+            { icon: Thermometer, text: '900°C температура' },
+            { icon: Package, text: 'Без дыма и золы' },
+          ],
+          href: '/products',
+          gradient: 'from-brand-orange/20 to-transparent',
+        },
+        only,
+      ]
+    }
+
+    return result
+  }, [data])
 
   return (
     <section className="section-padding bg-[#111111]">
@@ -60,7 +265,7 @@ export default function ProductsPreview() {
 
         {/* Products Grid */}
         <div ref={ref} className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {products.map((product, i) => (
+          {cards.map((product, i) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, y: 30 }}
