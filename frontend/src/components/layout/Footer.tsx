@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Phone, Mail, MapPin, MessageCircle, Send } from 'lucide-react'
+import { Phone, Mail, MapPin, MessageCircle, Send, MessagesSquare } from 'lucide-react'
 import FlameLogo from '@/components/ui/Flamelogo'
 
 const footerLinks = {
@@ -56,6 +56,15 @@ export default function Footer() {
                 aria-label="Telegram"
               >
                 <Send className="w-4 h-4" />
+              </a>
+              <a
+                href="https://max.ru/briket_beri"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-[#FF6B35]/10 border border-[#FF6B35]/20 rounded-lg flex items-center justify-center text-[#FF6B35] hover:bg-[#FF6B35]/20 transition-colors"
+                aria-label="MAX"
+              >
+                <MessagesSquare className="w-4 h-4" />
               </a>
               <a
                 href="tel:+79000000000"

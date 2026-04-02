@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import axios from 'axios'
-import { Upload, Save, Eye, EyeOff, Bot, Video, Globe, CreditCard, Mail } from 'lucide-react'
+import { Upload, Save, Eye, EyeOff, Bot, Video, Globe, CreditCard, Mail, Plus, X } from 'lucide-react'
 import clsx from 'clsx'
 
 const TABS = [
@@ -90,7 +90,8 @@ export default function AdminSettingsPage() {
               {[
                 { key: 'site.phone', label: 'Телефон', placeholder: '+7 (900) 000-00-00' },
                 { key: 'site.whatsapp', label: 'WhatsApp', placeholder: '+79000000000' },
-                { key: 'site.telegram', label: 'Telegram', placeholder: '@briket_berry' },
+                { key: 'site.telegram', label: 'Telegram username', placeholder: '@briket_beri' },
+                { key: 'site.max', label: 'MAX messenger username', placeholder: 'briket_beri' },
                 { key: 'site.email', label: 'Email', placeholder: 'info@briket-berry.ru' },
                 { key: 'site.address', label: 'Адрес', placeholder: 'Москва' },
               ].map((field) => (
@@ -231,7 +232,6 @@ export default function AdminSettingsPage() {
                 { key: 'email.smtpPort', label: 'SMTP Port', placeholder: '465' },
                 { key: 'email.user', label: 'Пользователь', placeholder: 'info@briket-berry.ru' },
                 { key: 'email.password', label: 'Пароль', placeholder: '••••••••', secret: true },
-                { key: 'email.notifyTo', label: 'Email менеджера', placeholder: 'orders@briket-berry.ru' },
               ].map((field) => (
                 <SettingField
                   key={field.key}
@@ -242,9 +242,82 @@ export default function AdminSettingsPage() {
                   onSave={(val) => handleSave(field.key, val)}
                 />
               ))}
+
+              <NotifyEmailsField
+                value={settingsMap['email.notifyTo'] || ''}
+                onSave={(val) => handleSave('email.notifyTo', val)}
+              />
             </>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+function NotifyEmailsField({ value, onSave }: { value: string; onSave: (val: string) => void }) {
+  const [emails, setEmails] = useState<string[]>(value ? value.split(',').map(e => e.trim()).filter(Boolean) : [''])
+  const [newEmail, setNewEmail] = useState('')
+
+  const save = (list: string[]) => {
+    const filtered = list.filter(Boolean)
+    setEmails(filtered.length ? filtered : [''])
+    onSave(filtered.join(','))
+  }
+
+  return (
+    <div>
+      <label className="text-white/60 text-sm mb-1.5 block">Email для уведомлений о заявках</label>
+      <p className="text-white/30 text-xs mb-3">Добавьте несколько адресов — уведомления придут на все</p>
+      <div className="space-y-2 mb-3">
+        {emails.map((email, i) => (
+          <div key={i} className="flex gap-2">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => {
+                const updated = [...emails]
+                updated[i] = e.target.value
+                setEmails(updated)
+              }}
+              onBlur={() => save(emails)}
+              placeholder="manager@example.ru"
+              className="input-field flex-1"
+            />
+            <button
+              onClick={() => save(emails.filter((_, idx) => idx !== i))}
+              className="w-10 h-10 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-500/20 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input
+          type="email"
+          value={newEmail}
+          onChange={(e) => setNewEmail(e.target.value)}
+          placeholder="Добавить ещё один email..."
+          className="input-field flex-1"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && newEmail) {
+              save([...emails.filter(Boolean), newEmail])
+              setNewEmail('')
+            }
+          }}
+        />
+        <button
+          onClick={() => {
+            if (newEmail) {
+              save([...emails.filter(Boolean), newEmail])
+              setNewEmail('')
+            }
+          }}
+          className="btn-primary py-2 px-4 text-sm"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
       </div>
     </div>
   )
