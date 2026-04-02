@@ -8,6 +8,12 @@ import { prisma } from '../utils/prisma'
 
 const router = Router()
 
+const absoluteUrl = (req: Request, relative: string) => {
+  const proto = req.headers['x-forwarded-proto']?.toString().split(',')[0] || req.protocol
+  const host = req.get('host')
+  return `${proto}://${host}${relative}`
+}
+
 const UPLOAD_DIR = path.join(__dirname, '../../uploads')
 
 // Ensure upload directories exist
@@ -62,7 +68,7 @@ router.post('/video', authMiddleware, videoUpload.single('video'), async (req: A
     create: { key: settingKey, value: url, label: 'Video URL', type: 'URL', group: 'video' },
   })
 
-  return successResponse(res, { url })
+  return successResponse(res, { url, absoluteUrl: absoluteUrl(req, url) })
 })
 
 // POST /api/v1/upload/image
@@ -71,7 +77,7 @@ router.post('/image', authMiddleware, imageUpload.single('image'), async (req: A
   if (!multerReq.file) return errorResponse(res, 400, 'UPLOAD_ERROR', 'Файл не загружен')
 
   const url = `/uploads/images/${multerReq.file.filename}`
-  return successResponse(res, { url })
+  return successResponse(res, { url, absoluteUrl: absoluteUrl(req, url) })
 })
 
 export default router

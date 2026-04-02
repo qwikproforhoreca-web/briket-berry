@@ -144,6 +144,18 @@ async function ensureDefaultProducts() {
 
 const MAX_PRODUCTS = 30
 
+const toAbsoluteUploadUrl = (req: Request, url: string) => {
+  if (!url.startsWith('/uploads/')) return url
+  const proto = req.headers['x-forwarded-proto']?.toString().split(',')[0] || req.protocol
+  const host = req.get('host')
+  return `${proto}://${host}${url}`
+}
+
+const mapProductImagesToAbsolute = (req: Request, product: any) => {
+  const images = Array.isArray(product?.images) ? product.images.map((u: string) => toAbsoluteUploadUrl(req, String(u))) : []
+  return { ...product, images }
+}
+
 // GET /api/v1/products - Public
 router.get('/', async (req: Request, res: Response) => {
   await ensureDefaultProducts()
@@ -156,7 +168,7 @@ router.get('/', async (req: Request, res: Response) => {
     orderBy: { sortOrder: 'asc' },
   })
 
-  return successResponse(res, products)
+  return successResponse(res, products.map((p) => mapProductImagesToAbsolute(req, p)))
 })
 
 // GET /api/v1/products/:id - Public
@@ -167,7 +179,7 @@ router.get('/:id', async (req: Request, res: Response) => {
   })
 
   if (!product) return errorResponse(res, 404, 'NOT_FOUND', 'Продукт не найден')
-  return successResponse(res, product)
+  return successResponse(res, mapProductImagesToAbsolute(req, product))
 })
 
 // POST /api/v1/products - Admin
@@ -189,26 +201,34 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     )
   }
 
-  const product = await prisma.product.create({
-    data: {
-      name,
-      slug,
-      sku,
-      description: description || name,
-      shortDesc,
-      price,
-      ...(priceWholesale !== undefined ? { priceWholesale } : {}),
-      category,
-      weight,
-      ...(Array.isArray(images) ? { images } : {}),
-      specs,
-      ...(typeof body.inStock === 'boolean' ? { inStock: body.inStock } : {}),
-      ...(typeof body.featured === 'boolean' ? { featured: body.featured } : {}),
-      ...(body.sortOrder !== undefined ? { sortOrder: Number(body.sortOrder) || 0 } : {}),
-    },
-  })
+  try {
+    const product = await prisma.product.create({
+      data: {
+        name,
+        slug,
+        sku,
+        description: description || name,
+        shortDesc,
+        price,
+        ...(priceWholesale !== undefined ? { priceWholesale } : {}),
+        category,
+        weight,
+        ...(Array.isArray(images) ? { images } : {}),
+        specs,
+        ...(typeof body.inStock === 'boolean' ? { inStock: body.inStock } : {}),
+        ...(typeof body.featured === 'boolean' ? { featured: body.featured } : {}),
+        ...(body.sortOrder !== undefined ? { sortOrder: Number(body.sortOrder) || 0 } : {}),
+      },
+    })
 
-  return successResponse(res, product, 201)
+    return successResponse(res, mapProductImagesToAbsolute(req, product), 201)
+  } catch (e: any) {
+    const code = e?.code || ''
+    if (code === 'P2002') {
+      return errorResponse(res, 400, 'DUPLICATE_VALUE', 'SKU или slug уже существует')
+    }
+    return errorResponse(res, 500, 'CREATE_FAILED', 'Не удалось создать товар')
+  }
 })
 
 // POST /api/v1/products/seed-defaults - Admin
@@ -221,11 +241,22 @@ router.post('/seed-defaults', authMiddleware, async (_req: AuthRequest, res: Res
 // PUT /api/v1/products/:id - Admin
 router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   const data = normalizeUpdateBody(req.body || {})
-  const product = await prisma.product.update({
-    where: { id: String(req.params.id) },
-    data,
-  })
-  return successResponse(res, product)
+  try {
+    const product = await prisma.product.update({
+      where: { id: String(req.params.id) },
+      data,
+    })
+    return successResponse(res, mapProductImagesToAbsolute(req, product))
+  } catch (e: any) {
+    const code = e?.code || ''
+    if (code === 'P2002') {
+      return errorResponse(res, 400, 'DUPLICATE_VALUE', 'SKU или slug уже существует')
+    }
+    if (code === 'P2025') {
+      return errorResponse(res, 404, 'NOT_FOUND', 'Товар не найден')
+    }
+    return errorResponse(res, 500, 'UPDATE_FAILED', 'Не удалось сохранить товар')
+  }
 })
 
 // DELETE /api/v1/products/:id - Admin
