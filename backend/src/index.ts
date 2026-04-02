@@ -97,16 +97,15 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 async function initAdmin() {
   try {
     const email = process.env.ADMIN_EMAIL || 'admin@briket-berry.ru'
-    const password = process.env.ADMIN_PASSWORD || 'admin123'
-    const existing = await prisma.admin.findUnique({ where: { email } })
-    if (!existing) {
-      const bcrypt = await import('bcryptjs')
-      const hash = await bcrypt.hash(password, 10)
-      await prisma.admin.create({
-        data: { email, password: hash, name: 'Администратор', role: 'SUPER_ADMIN' },
-      })
-      console.log(`✅ Admin created: ${email}`)
-    }
+    const password = process.env.ADMIN_PASSWORD || 'Admin123!'
+    const bcrypt = await import('bcryptjs')
+    const hash = await bcrypt.hash(password, 10)
+    await prisma.admin.upsert({
+      where: { email },
+      update: { password: hash },
+      create: { email, password: hash, name: 'Администратор', role: 'SUPER_ADMIN' },
+    })
+    console.log(`✅ Admin ready: ${email}`)
   } catch (e) {
     console.warn('⚠️ Could not init admin (DB not ready yet):', (e as Error).message)
   }

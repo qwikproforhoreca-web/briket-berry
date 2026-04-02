@@ -42,11 +42,12 @@ router.post('/login', authLimiter, async (req: Request, res: Response) => {
   res.cookie('admin_token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   })
 
-  return successResponse(res, { id: admin.id, email: admin.email, name: admin.name, role: admin.role })
+  // Also return token in body for cross-domain setups
+  return successResponse(res, { id: admin.id, email: admin.email, name: admin.name, role: admin.role, token })
 })
 
 // POST /api/v1/admin/logout

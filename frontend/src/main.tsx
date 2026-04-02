@@ -12,6 +12,16 @@ if (import.meta.env.VITE_API_URL) {
   axios.defaults.baseURL = import.meta.env.VITE_API_URL
 }
 
+// Attach admin token from localStorage for cross-domain auth
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem('admin_token')
+  if (token) {
+    config.headers = config.headers || {}
+    config.headers['Authorization'] = `Bearer ${token}`
+  }
+  return config
+})
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

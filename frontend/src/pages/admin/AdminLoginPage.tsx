@@ -26,7 +26,11 @@ export default function AdminLoginPage() {
   const onSubmit = async (data: LoginForm) => {
     setServerError('')
     try {
-      await axios.post('/api/v1/admin/login', data, { withCredentials: true })
+      const res = await axios.post('/api/v1/admin/login', data, { withCredentials: true })
+      // Store token in localStorage for cross-domain auth
+      if (res.data?.data?.token) {
+        localStorage.setItem('admin_token', res.data.data.token)
+      }
       navigate('/admin')
     } catch (e) {
       const err = e as { response?: { data?: { error?: { message?: string } } } }
