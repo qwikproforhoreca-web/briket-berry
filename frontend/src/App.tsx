@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
 import Layout from '@/components/layout/Layout'
 import AdminLayout from '@/components/admin/AdminLayout'
@@ -24,6 +24,9 @@ const AdminSettingsPage = lazy(() => import('@/pages/admin/AdminSettingsPage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 
 export default function App() {
+  const { pathname } = useLocation()
+  const showAiWidget = !pathname.startsWith('/admin')
+
   return (
     <>
       <Suspense fallback={<LoadingScreen />}>
@@ -58,7 +61,7 @@ export default function App() {
         </Routes>
       </Suspense>
 
-      <AiChatWidget />
+      {showAiWidget && <AiChatWidget />}
     </>
   )
 }
