@@ -16,13 +16,13 @@ export default function HomePage() {
         <title>Угольные брикеты Pini Kay для ресторанов и кафе | Брикет-Бери</title>
         <meta
           name="description"
-          content="Купить угольные брикеты Pini Kay оптом. 8 часов горения, без дыма и запаха, температура 900°C. Для ресторанов, кафе, хосперов. Цена от 750 ₽/кг"
+          content="Купить угольные брикеты Pini Kay оптом. до 12 часов горения, без дыма и запаха, температура 900°C. Для ресторанов, кафе, хосперов. Опт от 10 коробок — 835 ₽, розжиг опт от 20 — 100 ₽"
         />
         <meta name="keywords" content="угольные брикеты, pini kay, уголь для ресторана, уголь для хоспера, брикеты для мангала оптом" />
 
         {/* Open Graph */}
         <meta property="og:title" content="Угольные брикеты Pini Kay — для профессиональной кухни" />
-        <meta property="og:description" content="8 часов горения, без дыма и запаха. Брикеты Pini Kay для профессионалов. От 750 ₽/кг" />
+        <meta property="og:description" content="До 12 часов горения, без дыма и запаха. Опт от 10 коробок — 835 ₽" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://briket-berry.ru" />
         <meta property="og:image" content="https://briket-berry.ru/og-image.jpg" />

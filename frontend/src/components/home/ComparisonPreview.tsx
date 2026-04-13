@@ -4,11 +4,12 @@ import { motion, useInView } from 'framer-motion'
 import { Check, X, ArrowRight } from 'lucide-react'
 
 const rows = [
-  { param: 'Время горения', piniKay: 'До 8 часов', regular: '1-2 часа', win: true },
+  { param: 'Время горения', piniKay: 'До 12 часов', regular: '1-2 часа', win: true },
   { param: 'Температура', piniKay: '900°C+', regular: '500-600°C', win: true },
   { param: 'Дым и запах', piniKay: 'Отсутствует', regular: 'Много дыма', win: true },
   { param: 'Зольность', piniKay: '< 3%', regular: '8-15%', win: true },
-  { param: 'Эффективность', piniKay: '1 кг = 7 кг угля', regular: '1 кг = 1 кг', win: true },
+  { param: 'Эффективность', piniKay: '1 кг = 3 кг угля', regular: '1 кг = 1 кг', win: true },
+  { param: 'Упаковка', piniKay: '1 коробка = 2 мешка (по 5 кг)', regular: '2 мешка = 10 кг', win: true },
   { param: 'Повторное использование', piniKay: 'Да', regular: 'Нет', win: true },
 ]
 

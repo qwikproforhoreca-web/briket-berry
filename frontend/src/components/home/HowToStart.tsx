@@ -25,15 +25,15 @@ const steps = [
     emoji: '🌡️',
     title: 'Дождитесь жара',
     description: 'Брикеты покроются белой золой и начнут светиться. Когда все раскалились — температура достигла 900°C.',
-    time: '15-20 мин',
+    time: '25-30 мин',
     color: 'from-brand-gold to-brand-orange',
   },
   {
     number: '04',
     emoji: '🍖',
     title: 'Начинайте готовить',
-    description: 'Равномерный жар без вспышек и дыма. Следующая дозагрузка потребуется только через 4-8 часов.',
-    time: '4-8 часов',
+    description: 'Равномерный жар без вспышек и дыма. Следующая дозагрузка обычно требуется через 10-12 часов.',
+    time: '10-12 часов',
     color: 'from-brand-orange to-red-500',
   },
 ]
@@ -53,7 +53,7 @@ export default function HowToStart() {
           <div className="fire-badge mb-4">📋 Инструкция</div>
           <h2 className="section-title mb-4">
             Готово к работе за{' '}
-            <span className="gradient-text">20 минут</span>
+            <span className="gradient-text">30 минут</span>
           </h2>
           <p className="section-subtitle max-w-xl mx-auto">
             Никакого опыта не нужно. Простой процесс, который освоит любой сотрудник кухни.

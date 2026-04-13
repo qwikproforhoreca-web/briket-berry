@@ -2,12 +2,12 @@ import { Clock, Thermometer, Leaf, Award, Wind } from 'lucide-react'
 
 const trustItems = [
   { icon: Award, text: '500+ ресторанов' },
-  { icon: Clock, text: '8 часов горения' },
+  { icon: Clock, text: 'До 12 часов горения' },
   { icon: Wind, text: 'Без дыма и запаха' },
   { icon: Leaf, text: 'Экологически чистый' },
   { icon: Thermometer, text: 'Температура 900°C' },
   { icon: Award, text: 'Производство Россия' },
-  { icon: Clock, text: '1 кг = 7 кг угля' },
+  { icon: Clock, text: '1 кг = 3 кг угля' },
   { icon: Wind, text: 'Без копоти и сажи' },
 ]
 

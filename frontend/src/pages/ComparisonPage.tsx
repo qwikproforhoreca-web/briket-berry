@@ -4,12 +4,13 @@ import { Check, X, TrendingDown, Link as LinkIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 const comparisonRows = [
-  { param: 'Время горения', piniKay: 'До 8 часов', regular: '1-2 часа', wood: '2-3 часа', piniWins: true },
+  { param: 'Время горения', piniKay: 'До 12 часов', regular: '1-2 часа', wood: '2-3 часа', piniWins: true },
   { param: 'Рабочая температура', piniKay: '900°C', regular: '500-600°C', wood: '400-500°C', piniWins: true },
   { param: 'Дым', piniKay: 'Отсутствует', regular: 'Много', wood: 'Очень много', piniWins: true },
   { param: 'Запах', piniKay: 'Отсутствует', regular: 'Есть', wood: 'Выраженный', piniWins: true },
   { param: 'Зольность', piniKay: '< 3%', regular: '8-15%', wood: '20-30%', piniWins: true },
-  { param: 'Эффективность', piniKay: '1 кг = 7 кг угля', regular: '1 кг = 1 кг', wood: '1 кг = 0.5 кг', piniWins: true },
+  { param: 'Эффективность', piniKay: '1 кг = 3 кг угля', regular: '1 кг = 1 кг', wood: '1 кг = 0.5 кг', piniWins: true },
+  { param: 'Эквивалент упаковки', piniKay: '1 коробка (10 кг) = 2 мешка по 5 кг', regular: '2 мешка = 10 кг', wood: '10 кг дров', piniWins: true },
   { param: 'Равномерность жара', piniKay: 'Высокая', regular: 'Низкая', wood: 'Низкая', piniWins: true },
   { param: 'Повторное использование', piniKay: 'Да', regular: 'Нет', wood: 'Нет', piniWins: true },
   { param: 'Хранение', piniKay: 'Любое', regular: 'Сухое', wood: 'Сухое', piniWins: true },
@@ -109,7 +110,7 @@ export default function ComparisonPage() {
             <div className="text-center mb-12">
               <TrendingDown className="w-10 h-10 text-brand-orange mx-auto mb-4" />
               <h2 className="section-title mb-4">Экономический расчёт</h2>
-              <p className="section-subtitle">Ресторан с 2 хосперами, 10 часов работы в день</p>
+              <p className="section-subtitle">Ресторан с 2 хосперами, 12 часов работы в день</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -119,13 +120,13 @@ export default function ComparisonPage() {
                   color: 'border-red-500/20 bg-red-500/3',
                   label: '❌ Невыгодно',
                   items: [
-                    { label: 'Расход / хоспер / день', value: '5 кг' },
-                    { label: 'Итого в день (×2)', value: '10 кг' },
-                    { label: 'Стоимость / день', value: '800 ₽' },
-                    { label: 'В месяц (25 дней)', value: '20 000 ₽' },
-                    { label: 'В год', value: '240 000 ₽' },
+                    { label: 'Расход / хоспер / день', value: '30 кг (6 мешков по 5 кг)' },
+                    { label: 'Итого в день (×2)', value: '60 кг (12 мешков)' },
+                    { label: 'Стоимость / день', value: '5 400 ₽' },
+                    { label: 'В месяц (25 дней)', value: '135 000 ₽' },
+                    { label: 'В год', value: '1 620 000 ₽' },
                   ],
-                  total: '240 000 ₽/год',
+                  total: '1 620 000 ₽/год',
                   totalColor: 'text-red-400',
                 },
                 {
@@ -133,13 +134,13 @@ export default function ComparisonPage() {
                   color: 'border-brand-orange/20 bg-brand-orange/3',
                   label: '✅ Выгоднее',
                   items: [
-                    { label: 'Расход / хоспер / день', value: '1.5 кг' },
-                    { label: 'Итого в день (×2)', value: '3 кг' },
-                    { label: 'Стоимость / день', value: '2 250 ₽' },
-                    { label: 'В месяц (25 дней)', value: '56 250 ₽' },
-                    { label: 'В год', value: '~150 000 ₽*' },
+                    { label: 'Расход / хоспер / день', value: '10 кг (1 коробка)' },
+                    { label: 'Итого в день (×2)', value: '20 кг (2 коробки)' },
+                    { label: 'Стоимость / день', value: '1 780 ₽' },
+                    { label: 'В месяц (25 дней)', value: '44 500 ₽' },
+                    { label: 'В год', value: '534 000 ₽' },
                   ],
-                  total: '~150 000 ₽/год*',
+                  total: '534 000 ₽/год',
                   totalColor: 'text-green-400',
                 },
               ].map((col) => (
@@ -165,7 +166,7 @@ export default function ComparisonPage() {
             </div>
 
             <p className="text-white/30 text-xs text-center mt-4">
-              * С учётом скрытой экономии: экономия труда, снижение жалоб, повышение качества и среднего чека
+              Расчёт ориентировочный: мешок обычного угля принят как 5 кг, коробка Pini Kay — 10 кг.
             </p>
           </div>
         </div>

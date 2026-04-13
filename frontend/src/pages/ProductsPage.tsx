@@ -155,10 +155,10 @@ function CalcField({ id, label, hint, value, onChange, min, max }: CalcFieldProp
 
 function ConsumptionCalculator() {
   const [workers, setWorkers] = useState(1)
-  const [hours, setHours] = useState(8)
+  const [hours, setHours] = useState(12)
   const [days, setDays] = useState(25)
 
-  const kgPerDay = workers * 1.5 * (hours / 6)
+  const kgPerDay = workers * 10 * (hours / 12)
   const kgPerMonth = kgPerDay * days
   const boxesMonth = Math.max(1, Math.ceil(kgPerMonth / 10))
 
@@ -181,7 +181,8 @@ function ConsumptionCalculator() {
               Калькулятор расхода
             </h3>
             <p className="text-white/45 text-sm sm:text-base mt-1.5 leading-relaxed max-w-xl">
-              Оценка по типовой нагрузке: ~1,5 кг брикетов на единицу за 6 ч работы. Подберите параметры — ниже появится ориентир по закупке.
+              Оценка по рабочей модели: 1 коробка (10 кг) на 1 хоспер/мангал за 12 часовую смену.
+              Подберите параметры — ниже появится ориентир по закупке.
             </p>
           </div>
         </div>
@@ -202,7 +203,7 @@ function ConsumptionCalculator() {
             hint="Средняя длительность смены с горящим углём"
             value={hours}
             onChange={setHours}
-            min={4}
+            min={8}
             max={16}
           />
           <CalcField
@@ -291,7 +292,7 @@ export default function ProductsPage() {
         Object.entries(specsObj).map(([k, v]) => [k, String(v)])
       )
 
-      const features = Object.values(specs).slice(0, 5)
+      const features = Array.from(new Set(Object.values(specs).map((v) => String(v).trim()).filter(Boolean))).slice(0, 5)
 
       const price = Number(p.price ?? 0)
       const priceWholesale = p.priceWholesale !== null && typeof p.priceWholesale !== 'undefined' ? Number(p.priceWholesale) : 0
@@ -335,7 +336,7 @@ export default function ProductsPage() {
         <title>Купить угольные брикеты Pini Kay оптом | Брикет-Бери</title>
         <meta
           name="description"
-          content="Угольные брикеты Pini Kay для ресторанов и кафе. 10 кг от 750 ₽. Парафиновый розжиг 8 кубиков — 120 ₽. Оптовые цены. Работаем 10:00–18:00"
+          content="Угольные брикеты Pini Kay для ресторанов и кафе. 10 кг — 890 ₽. Опт от 10 коробок: 835 ₽. Парафиновый розжиг 8 кубиков — 120 ₽, опт от 20 упаковок: 100 ₽."
         />
       </Helmet>
 
@@ -451,7 +452,9 @@ export default function ProductsPage() {
                     <div className="min-w-0">
                       <div className="font-display font-bold text-2xl text-white">{product.price} ₽</div>
                       <div className="text-white/30 text-xs mt-0.5">
-                        Опт от {product.wholesaleMin} шт: {product.priceWholesale} ₽
+                        {product.category === 'briquettes'
+                          ? 'Опт от 10 коробок: 835 ₽/коробка'
+                          : 'Опт от 20 упаковок: 100 ₽/упаковка'}
                       </div>
                     </div>
                     <Link

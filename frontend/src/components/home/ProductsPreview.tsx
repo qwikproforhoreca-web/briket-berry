@@ -109,19 +109,21 @@ export default function ProductsPreview() {
       const priceWholesale =
         typeof p.priceWholesale === 'number'
           ? category === 'briquettes'
-            ? `опт от ${Math.round(Number(p.priceWholesale))} ₽/кг`
-            : `опт от ${Math.round(Number(p.priceWholesale))} ₽`
+            ? 'опт от 10 коробок: 835 ₽'
+            : 'опт от 20 упаковок: 100 ₽'
           : 'опт по запросу'
 
       const iconList = [Clock, Thermometer, Package]
       const specEntries = Object.entries(specs || {})
         .filter(([, v]) => v != null && String(v).trim() !== '')
+        // убираем дубли по тексту фич
+        .filter((entry, idx, arr) => arr.findIndex((e) => String(e[1]).trim() === String(entry[1]).trim()) === idx)
         .slice(0, 3)
 
       const fallbackFeatures =
         category === 'briquettes'
           ? [
-              { icon: Clock, text: 'До 8 часов горения' },
+              { icon: Clock, text: 'До 12 часов горения' },
               { icon: Thermometer, text: '900°C температура' },
               { icon: Package, text: 'Без дыма и запаха' },
             ]
@@ -170,12 +172,12 @@ export default function ProductsPreview() {
           name: 'Pini Kay Брикеты',
           subtitle: '10 кг — 1 ящик',
           price: 'от 890 ₽',
-          priceWholesale: 'опт от 750 ₽/кг',
+          priceWholesale: 'опт от 10 коробок: 835 ₽',
           image: '/favicon.svg',
           badge: '🔥 Хит продаж',
           badgeColor: 'bg-brand-orange/20 text-brand-orange border-brand-orange/30',
           features: [
-            { icon: Clock, text: 'До 8 часов горения' },
+            { icon: Clock, text: 'До 12 часов горения' },
             { icon: Thermometer, text: '900°C температура' },
             { icon: Package, text: 'Без дыма и золы' },
           ],
@@ -188,7 +190,7 @@ export default function ProductsPreview() {
           name: 'Парафиновый розжиг',
           subtitle: '8 кубиков в упаковке',
           price: 'от 120 ₽',
-          priceWholesale: 'опт: скидка 30%',
+          priceWholesale: 'опт от 20 упаковок: 100 ₽',
           image: '/favicon.svg',
           badge: '✨ Экологичный',
           badgeColor: 'bg-green-500/20 text-green-400 border-green-500/30',
@@ -215,7 +217,7 @@ export default function ProductsPreview() {
             name: 'Парафиновый розжиг',
             subtitle: '8 кубиков в упаковке',
             price: 'от 120 ₽',
-            priceWholesale: 'опт: скидка 30%',
+            priceWholesale: 'опт от 20 упаковок: 100 ₽',
             image: '/favicon.svg',
             badge: '✨ Экологичный',
             badgeColor: 'bg-green-500/20 text-green-400 border-green-500/30',
@@ -237,12 +239,12 @@ export default function ProductsPreview() {
           name: 'Pini Kay Брикеты',
           subtitle: '10 кг — 1 ящик',
           price: 'от 890 ₽',
-          priceWholesale: 'опт от 750 ₽/кг',
+          priceWholesale: 'опт от 10 коробок: 835 ₽',
           image: '/favicon.svg',
           badge: '🔥 Хит продаж',
           badgeColor: 'bg-brand-orange/20 text-brand-orange border-brand-orange/30',
           features: [
-            { icon: Clock, text: 'До 8 часов горения' },
+            { icon: Clock, text: 'До 12 часов горения' },
             { icon: Thermometer, text: '900°C температура' },
             { icon: Package, text: 'Без дыма и золы' },
           ],

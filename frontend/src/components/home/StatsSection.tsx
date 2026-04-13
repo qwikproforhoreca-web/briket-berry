@@ -19,18 +19,18 @@ const stats: Stat[] = [
     color: 'from-brand-orange to-brand-orange-dark',
   },
   {
-    value: 8,
+    value: 12,
     suffix: ' часов',
     label: 'Непрерывного горения',
     description: 'Без дозагрузки и поддержки огня',
     color: 'from-brand-gold to-amber-500',
   },
   {
-    value: 7,
+    value: 3,
     suffix: 'x',
     prefix: '',
     label: 'Эффективнее угля',
-    description: '1 кг брикетов заменяет 7 кг обычного угля',
+    description: '1 кг брикетов заменяет около 3 кг обычного угля',
     color: 'from-brand-orange to-brand-gold',
   },
   {
