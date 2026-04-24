@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "npx eslint .",
+    "lint": "node ./node_modules/eslint/bin/eslint.js . --format json-with-metadata",
     "preview": "vite preview"
   },
   "dependencies": {
