@@ -180,9 +180,12 @@ export default function ReviewsPage() {
                       onError={(e) => {
                         const t = e.target as HTMLImageElement
                         t.style.display = 'none'
-                        if (t.parentElement) {
-                          t.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center text-brand-orange font-bold text-xl">${review.name[0]}</div>`
-                        }
+                        const parent = t.parentElement
+                        if (!parent) return
+                        const fallback = document.createElement('div')
+                        fallback.className = 'w-full h-full flex items-center justify-center text-brand-orange font-bold text-xl'
+                        fallback.textContent = review.name[0]
+                        parent.replaceChildren(fallback)
                       }}
                     />
                   </div>

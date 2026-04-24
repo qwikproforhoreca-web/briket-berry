@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
@@ -76,6 +76,8 @@ function CalcField({ id, label, hint, value, onChange, min, max }: CalcFieldProp
   const focused = useRef(false)
 
   useEffect(() => {
+    // Sync controlled input after parent value updates (lint rule disabled for this controlled-field pattern).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!focused.current) setText(String(value))
   }, [value])
 
@@ -102,8 +104,8 @@ function CalcField({ id, label, hint, value, onChange, min, max }: CalcFieldProp
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-col gap-0.5">
+    <div className="space-y-2 h-full">
+      <div className="flex flex-col gap-0.5 min-h-[56px]">
         <label htmlFor={id} className="text-white/80 text-sm font-medium tracking-tight">
           {label}
         </label>
@@ -152,7 +154,7 @@ function CalcField({ id, label, hint, value, onChange, min, max }: CalcFieldProp
           <Plus className="w-4 h-4" strokeWidth={2.5} />
         </button>
       </div>
-      <p className="text-white/25 text-[11px]">
+      <p className="text-white/25 text-[11px] min-h-[14px]">
         Диапазон: {min}–{max}
       </p>
     </div>
@@ -270,12 +272,12 @@ export default function ProductsPage() {
   const [activeCategory, setActiveCategory] = useState<Category>('all')
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null)
   const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || ''
-  const resolveImageUrl = (url?: string) => {
+  const resolveImageUrl = useCallback((url?: string) => {
     if (!url) return '/favicon.svg'
     if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url
     if (url.startsWith('/uploads/') && API_BASE) return `${API_BASE}${url}`
     return url
-  }
+  }, [API_BASE])
 
   const { data } = useQuery({
     queryKey: ['products-public'],
@@ -283,7 +285,7 @@ export default function ProductsPage() {
   })
 
   const products: CatalogProduct[] = useMemo(() => {
-    const list = Array.isArray(data) ? (data as any[]) : []
+    const list = Array.isArray(data) ? (data as Record<string, unknown>[]) : []
 
     return list.map((p) => {
       const apiCategory = String(p.category) as ApiCategory
@@ -330,7 +332,7 @@ export default function ProductsPage() {
         specs,
       }
     })
-  }, [data])
+  }, [data, resolveImageUrl])
 
   const filtered = products.filter((p) => activeCategory === 'all' || p.category === activeCategory)
 
@@ -340,7 +342,7 @@ export default function ProductsPage() {
         <title>Купить угольные брикеты Pini Kay оптом | Брикет-Бери</title>
         <meta
           name="description"
-          content="Угольные брикеты Pini Kay для ресторанов и кафе. 10 кг — 890 ₽. Опт от 10 коробок: 835 ₽. Парафиновый розжиг 8 кубиков — 120 ₽, опт от 20 упаковок: 100 ₽."
+          content="Угольные брикеты Pini Kay для ресторанов и кафе. 10 кг — 890 ₽. Опт 835 ₽/шт от 20 шт. Парафиновый розжиг 8 кубиков — 120 ₽, опт 100 ₽/шт от 50 шт."
         />
         <meta name="robots" content="index,follow" />
         <link rel="canonical" href="https://briket-berry.ru/products" />
@@ -463,8 +465,8 @@ export default function ProductsPage() {
                       <div className="font-display font-bold text-2xl text-white">{product.price} ₽</div>
                       <div className="text-white/30 text-xs mt-0.5">
                         {product.category === 'briquettes'
-                          ? 'Опт от 10 коробок: 835 ₽/коробка'
-                          : 'Опт от 20 упаковок: 100 ₽/упаковка'}
+                          ? 'Опт: 835 ₽/шт от 20 шт'
+                          : 'Опт: 100 ₽/шт от 50 шт'}
                       </div>
                     </div>
                     <Link

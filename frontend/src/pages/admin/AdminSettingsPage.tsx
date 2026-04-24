@@ -17,6 +17,18 @@ export default function AdminSettingsPage() {
   const [saved, setSaved] = useState(false)
   const [smtpTestMessage, setSmtpTestMessage] = useState('')
   const [smtpTestError, setSmtpTestError] = useState('')
+
+  type HttpError = {
+    code?: string
+    response?: {
+      data?: {
+        error?: {
+          code?: string
+          message?: string
+        }
+      }
+    }
+  }
   const videoRef = useRef<HTMLInputElement>(null)
 
   const { data: settings } = useQuery({
@@ -56,7 +68,7 @@ export default function AdminSettingsPage() {
       )
     },
     onError: (e: unknown) => {
-      const err = e as any
+      const err = e as HttpError
       setSmtpTestMessage('')
       if (err?.code === 'ECONNABORTED') {
         setSmtpTestError('Запрос долго не завершился. Если вы на Railway — настройте webhook (см. жёлтый блок выше), прямой SMTP с платформы недоступен.')

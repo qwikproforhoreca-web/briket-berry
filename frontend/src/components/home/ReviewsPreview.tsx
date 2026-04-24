@@ -79,7 +79,12 @@ function ReviewCard({
             onError={(e) => {
               const target = e.target as HTMLImageElement
               target.style.display = 'none'
-              target.parentElement!.innerHTML = `<span class="text-brand-orange font-bold text-lg">${review.name[0]}</span>`
+              const parent = target.parentElement
+              if (!parent) return
+              const fallback = document.createElement('span')
+              fallback.className = 'text-brand-orange font-bold text-lg'
+              fallback.textContent = review.name[0]
+              parent.replaceChildren(fallback)
             }}
           />
         </div>

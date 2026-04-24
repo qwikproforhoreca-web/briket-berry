@@ -37,6 +37,19 @@ type Product = {
   weight?: number
 }
 
+function getOrderPricing(product: Product) {
+  const regular = Number(product.price || 0)
+  const sku = String(product.sku || '').toUpperCase()
+
+  // Keep request-form pricing stable even if legacy DB values differ.
+  if (sku === 'PFR-8') return { regular, wholesale: 100, wholesaleMin: 50 }
+  if (sku === 'PKB-10') return { regular, wholesale: 835, wholesaleMin: 20 }
+
+  const wholesale = product.priceWholesale != null ? Number(product.priceWholesale) : regular
+  const wholesaleMin = Number(product.wholesaleMinQty || 1)
+  return { regular, wholesale, wholesaleMin }
+}
+
 const steps = ['Товары', 'Оплата', 'Контакты']
 const MAX_QTY = 9999
 const INPUT_DEBOUNCE_MS = 180
@@ -70,8 +83,9 @@ export default function OrderPage() {
   const timersRef = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({})
 
   useEffect(() => {
+    const timers = timersRef.current
     return () => {
-      Object.values(timersRef.current).forEach((timer) => {
+      Object.values(timers).forEach((timer) => {
         if (timer) clearTimeout(timer)
       })
     }
@@ -100,9 +114,7 @@ export default function OrderPage() {
       const qty = quantities[product.id] || 0
       if (!qty) return acc
 
-      const regular = Number(product.price || 0)
-      const wholesale = product.priceWholesale != null ? Number(product.priceWholesale) : regular
-      const wholesaleMin = Number(product.wholesaleMinQty || 1)
+      const { regular, wholesale, wholesaleMin } = getOrderPricing(product)
       const unitPrice = qty >= wholesaleMin ? wholesale : regular
 
       acc.subtotal += regular * qty
@@ -234,9 +246,7 @@ export default function OrderPage() {
                           const qty = quantities[item.id] || 0
                           const draftRaw = draftQuantities[item.id]
                           const isOverLimit = typeof draftRaw === 'string' && draftRaw.length > 0 && Number(draftRaw) > MAX_QTY
-                          const regular = Number(item.price || 0)
-                          const wholesale = item.priceWholesale != null ? Number(item.priceWholesale) : regular
-                          const wholesaleMin = Number(item.wholesaleMinQty || 1)
+                          const { regular, wholesale, wholesaleMin } = getOrderPricing(item)
                           const wholesaleLabel = `${wholesale.toLocaleString('ru')} ₽/шт от ${wholesaleMin}`
                           return (
                           <div key={item.id} className="flex items-center gap-4 p-4 bg-[#111111] rounded-xl border border-white/5">

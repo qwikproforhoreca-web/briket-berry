@@ -9,6 +9,14 @@ import { authLimiter } from '../middleware/rateLimiter'
 
 const router = Router()
 
+function requireJwtSecret() {
+  const secret = process.env.JWT_SECRET
+  if (!secret || secret.length < 32) {
+    throw new Error('JWT_SECRET is not configured or too short')
+  }
+  return secret
+}
+
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
@@ -33,11 +41,16 @@ router.post('/login', authLimiter, async (req: Request, res: Response) => {
     return errorResponse(res, 401, 'UNAUTHORIZED', 'Неверный email или пароль')
   }
 
-  const token = jwt.sign(
-    { id: admin.id, email: admin.email, role: admin.role },
-    process.env.JWT_SECRET || 'default-secret',
-    { expiresIn: '7d' }
-  )
+  let token: string
+  try {
+    token = jwt.sign(
+      { id: admin.id, email: admin.email, role: admin.role },
+      requireJwtSecret(),
+      { expiresIn: '7d' }
+    )
+  } catch {
+    return errorResponse(res, 500, 'SECURITY_MISCONFIG', 'Сервер авторизации настроен неверно')
+  }
 
   res.cookie('admin_token', token, {
     httpOnly: true,

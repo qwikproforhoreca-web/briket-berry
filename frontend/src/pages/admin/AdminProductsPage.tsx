@@ -26,6 +26,11 @@ interface SpecRow {
 }
 
 export default function AdminProductsPage() {
+  const getErrorMessage = (e: unknown, fallback: string) => {
+    const err = e as { response?: { data?: { error?: { message?: string } } } }
+    return err.response?.data?.error?.message || fallback
+  }
+
   const queryClient = useQueryClient()
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -80,8 +85,7 @@ export default function AdminProductsPage() {
       resetForm()
     },
     onError: (e: unknown) => {
-      const err = e as any
-      setServerError(err?.response?.data?.error?.message || 'Ошибка при создании продукта')
+      setServerError(getErrorMessage(e, 'Ошибка при создании продукта'))
     },
   })
 
@@ -92,8 +96,7 @@ export default function AdminProductsPage() {
       setSuccessMessage('Базовые товары готовы')
     },
     onError: (e: unknown) => {
-      const err = e as any
-      setServerError(err?.response?.data?.error?.message || 'Не удалось создать базовые товары')
+      setServerError(getErrorMessage(e, 'Не удалось создать базовые товары'))
     },
   })
 
@@ -106,8 +109,7 @@ export default function AdminProductsPage() {
       resetForm()
     },
     onError: (e: unknown) => {
-      const err = e as any
-      setServerError(err?.response?.data?.error?.message || 'Ошибка при обновлении продукта')
+      setServerError(getErrorMessage(e, 'Ошибка при обновлении продукта'))
     },
   })
 
@@ -210,8 +212,7 @@ export default function AdminProductsPage() {
         createProduct.mutate(payload)
       }
     } catch (e) {
-      const err = e as any
-      setServerError(err?.response?.data?.error?.message || 'Ошибка загрузки фото или сохранения')
+      setServerError(getErrorMessage(e, 'Ошибка загрузки фото или сохранения'))
     } finally {
       setIsUploadingImages(false)
     }

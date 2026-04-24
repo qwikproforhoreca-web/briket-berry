@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
 import { ArrowRight, Clock, Thermometer, Package } from 'lucide-react'
@@ -60,12 +60,12 @@ export default function ProductsPreview() {
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
   const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || ''
-  const resolveImageUrl = (url?: string) => {
+  const resolveImageUrl = useCallback((url?: string) => {
     if (!url) return '/favicon.svg'
     if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url
     if (url.startsWith('/uploads/') && API_BASE) return `${API_BASE}${url}`
     return url
-  }
+  }, [API_BASE])
 
   const { data } = useQuery({
     queryKey: ['products-public'],
@@ -135,7 +135,7 @@ export default function ProductsPreview() {
       }
     }
 
-    const result: any[] = []
+    const result: ReturnType<typeof makeCard>[] = []
     if (briquettes) result.push(makeCard(briquettes, 'briquettes'))
     if (firestarters) result.push(makeCard(firestarters, 'firestarters'))
 
@@ -232,7 +232,7 @@ export default function ProductsPreview() {
     }
 
     return result
-  }, [data])
+  }, [data, resolveImageUrl])
 
   return (
     <section className="section-padding bg-[#111111]">

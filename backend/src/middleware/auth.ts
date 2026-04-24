@@ -5,6 +5,14 @@ export interface AuthRequest extends Request {
   admin?: { id: string; email: string; role: string }
 }
 
+function getJwtSecret() {
+  const secret = process.env.JWT_SECRET
+  if (!secret || secret.length < 32) {
+    throw new Error('JWT_SECRET is not configured or too short')
+  }
+  return secret
+}
+
 export function authMiddleware(req: AuthRequest, res: Response, next: NextFunction) {
   const token = req.cookies?.admin_token || req.headers.authorization?.replace('Bearer ', '')
 
@@ -13,7 +21,7 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
   }
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET || 'default-secret') as any
+    const payload = jwt.verify(token, getJwtSecret()) as any
     req.admin = { id: payload.id, email: payload.email, role: payload.role }
     next()
   } catch {

@@ -35,6 +35,12 @@ app.use(helmet({
   contentSecurityPolicy: false, // configured separately for prod
 }))
 
+// Enforce secure resource loading to avoid browser "Not secure" warnings caused by mixed content.
+app.use((_req, res, next) => {
+  res.setHeader('Content-Security-Policy', 'upgrade-insecure-requests; block-all-mixed-content')
+  next()
+})
+
 // CORS
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:3000',
@@ -126,7 +132,15 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 async function initAdmin() {
   try {
     const email = process.env.ADMIN_EMAIL || 'admin@briket-berry.ru'
-    const password = process.env.ADMIN_PASSWORD || 'Admin123!'
+    const password = process.env.ADMIN_PASSWORD
+    if (!password) {
+      if (process.env.NODE_ENV === 'production') {
+        console.warn('⚠️ ADMIN_PASSWORD not set: skip admin bootstrap in production')
+        return
+      }
+      console.warn('⚠️ ADMIN_PASSWORD not set: skip admin bootstrap in development')
+      return
+    }
     const bcrypt = await import('bcryptjs')
     const hash = await bcrypt.hash(password, 10)
     await prisma.admin.upsert({
