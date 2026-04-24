@@ -18,6 +18,7 @@ export default function OrderSuccessPage() {
     <>
       <Helmet>
         <title>Заявка принята | Брикет-Бери</title>
+        <meta name="robots" content="noindex,nofollow" />
       </Helmet>
 
       <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center relative overflow-hidden">

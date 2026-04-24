@@ -52,7 +52,7 @@ export default function HowToStart() {
         <div className="text-center mb-16">
           <div className="fire-badge mb-4">📋 Инструкция</div>
           <h2 className="section-title mb-4">
-            Готово к работе за{' '}
+            Готово к работе через{' '}
             <span className="gradient-text">30 минут</span>
           </h2>
           <p className="section-subtitle max-w-xl mx-auto">

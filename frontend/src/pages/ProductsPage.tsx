@@ -13,6 +13,12 @@ type ApiCategory = 'BRIQUETTES' | 'FIRESTARTERS'
 
 type CatalogCategory = 'briquettes' | 'firestarters'
 
+/** Короткий список на карточке — не из БД, чтобы не дублировались строки из характеристик. */
+const catalogCardFeatureLines: Record<CatalogCategory, readonly string[]> = {
+  briquettes: ['До 8 часов горения', '900°C температура', 'Без дыма и запаха'],
+  firestarters: ['Розжиг за 5–7 минут', 'Без жидкости — натуральный парафин', 'Без дыма и запаха'],
+}
+
 type CatalogSpecs = Record<string, string>
 
 type CatalogProduct = {
@@ -292,8 +298,6 @@ export default function ProductsPage() {
         Object.entries(specsObj).map(([k, v]) => [k, String(v)])
       )
 
-      const features = Array.from(new Set(Object.values(specs).map((v) => String(v).trim()).filter(Boolean))).slice(0, 5)
-
       const price = Number(p.price ?? 0)
       const priceWholesale = p.priceWholesale !== null && typeof p.priceWholesale !== 'undefined' ? Number(p.priceWholesale) : 0
 
@@ -322,7 +326,7 @@ export default function ProductsPage() {
         badgeClass,
         image,
         description: String(p.description ?? ''),
-        features,
+        features: [...catalogCardFeatureLines[category]],
         specs,
       }
     })
@@ -338,6 +342,12 @@ export default function ProductsPage() {
           name="description"
           content="Угольные брикеты Pini Kay для ресторанов и кафе. 10 кг — 890 ₽. Опт от 10 коробок: 835 ₽. Парафиновый розжиг 8 кубиков — 120 ₽, опт от 20 упаковок: 100 ₽."
         />
+        <meta name="robots" content="index,follow" />
+        <link rel="canonical" href="https://briket-berry.ru/products" />
+        <meta property="og:title" content="Каталог Pini Kay: брикеты и розжиг оптом" />
+        <meta property="og:description" content="Каталог угольных брикетов и розжига Pini Kay для мангалов и хосперов." />
+        <meta property="og:url" content="https://briket-berry.ru/products" />
+        <meta property="og:type" content="product.group" />
       </Helmet>
 
       {/* Hero */}

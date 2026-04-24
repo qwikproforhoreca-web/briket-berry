@@ -16,34 +16,68 @@ export default function HomePage() {
         <title>Угольные брикеты Pini Kay для ресторанов и кафе | Брикет-Бери</title>
         <meta
           name="description"
-          content="Купить угольные брикеты Pini Kay оптом. до 12 часов горения, без дыма и запаха, температура 900°C. Для ресторанов, кафе, хосперов. Опт от 10 коробок — 835 ₽, розжиг опт от 20 — 100 ₽"
+          content="Купить угольные брикеты Pini Kay оптом. до 8 часов горения, без дыма и запаха, температура 900°C. Для ресторанов, кафе, хосперов. Опт от 10 коробок — 835 ₽, розжиг опт от 20 — 100 ₽"
         />
         <meta name="keywords" content="угольные брикеты, pini kay, уголь для ресторана, уголь для хоспера, брикеты для мангала оптом" />
+        <meta name="robots" content="index,follow" />
+        <link rel="canonical" href="https://briket-berry.ru/" />
 
         {/* Open Graph */}
         <meta property="og:title" content="Угольные брикеты Pini Kay — для профессиональной кухни" />
-        <meta property="og:description" content="До 12 часов горения, без дыма и запаха. Опт от 10 коробок — 835 ₽" />
+        <meta property="og:description" content="До 8 часов горения, без дыма и запаха. Опт от 10 коробок — 835 ₽" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://briket-berry.ru" />
         <meta property="og:image" content="https://briket-berry.ru/og-image.jpg" />
+        <meta property="og:image:alt" content="Угольные брикеты Pini Kay оптом для ресторанов и хосперов" />
         <meta property="og:locale" content="ru_RU" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Угольные брикеты Pini Kay — для профессиональной кухни" />
+        <meta name="twitter:description" content="До 8 часов горения, без дыма и запаха. Опт от 10 коробок — 835 ₽" />
+        <meta name="twitter:image" content="https://briket-berry.ru/og-image.jpg" />
 
         {/* Schema.org */}
         <script type="application/ld+json">{JSON.stringify({
           '@context': 'https://schema.org',
-          '@type': 'Organization',
-          name: 'Брикет-Бери',
-          url: 'https://briket-berry.ru',
-          logo: 'https://briket-berry.ru/logo.png',
-          contactPoint: {
-            '@type': 'ContactPoint',
-            telephone: '+7-900-000-00-00',
-            contactType: 'sales',
-            availableLanguage: 'Russian',
-          },
-          sameAs: [
-            'https://wa.me/79000000000',
-            'https://t.me/briket_berry',
+          '@graph': [
+            {
+              '@type': 'Organization',
+              '@id': 'https://briket-berry.ru/#organization',
+              name: 'Брикет-Бери',
+              url: 'https://briket-berry.ru',
+              logo: 'https://briket-berry.ru/logo.png',
+              areaServed: 'RU',
+              sameAs: [
+                'https://wa.me/79000000000',
+                'https://t.me/briket_berry',
+              ],
+              contactPoint: {
+                '@type': 'ContactPoint',
+                telephone: '+7-900-000-00-00',
+                contactType: 'sales',
+                availableLanguage: ['ru'],
+              },
+            },
+            {
+              '@type': 'LocalBusiness',
+              '@id': 'https://briket-berry.ru/#localbusiness',
+              name: 'Брикет-Бери',
+              url: 'https://briket-berry.ru',
+              image: 'https://briket-berry.ru/og-image.jpg',
+              priceRange: '₽₽',
+              areaServed: ['Москва', 'Санкт-Петербург', 'Россия'],
+              telephone: '+7-900-000-00-00',
+              address: {
+                '@type': 'PostalAddress',
+                addressCountry: 'RU',
+              },
+            },
+            {
+              '@type': 'WebSite',
+              '@id': 'https://briket-berry.ru/#website',
+              url: 'https://briket-berry.ru',
+              name: 'Брикет-Бери',
+              inLanguage: 'ru-RU',
+            },
           ],
         })}</script>
       </Helmet>

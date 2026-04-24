@@ -4,7 +4,7 @@ import { Check, X, TrendingDown, Link as LinkIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 const comparisonRows = [
-  { param: 'Время горения', piniKay: 'До 12 часов', regular: '1-2 часа', wood: '2-3 часа', piniWins: true },
+  { param: 'Время горения', piniKay: 'До 8 часов', regular: '1-2 часа', wood: '2-3 часа', piniWins: true },
   { param: 'Рабочая температура', piniKay: '900°C', regular: '500-600°C', wood: '400-500°C', piniWins: true },
   { param: 'Дым', piniKay: 'Отсутствует', regular: 'Много', wood: 'Очень много', piniWins: true },
   { param: 'Запах', piniKay: 'Отсутствует', regular: 'Есть', wood: 'Выраженный', piniWins: true },
@@ -32,6 +32,11 @@ export default function ComparisonPage() {
       <Helmet>
         <title>Pini Kay vs обычный уголь — сравнение | Брикет-Бери</title>
         <meta name="description" content="Детальное сравнение угольных брикетов Pini Kay с обычным берёзовым углём и дровами. Экономический расчёт для ресторанного бизнеса." />
+        <meta name="robots" content="index,follow" />
+        <link rel="canonical" href="https://briket-berry.ru/comparison" />
+        <meta property="og:title" content="Сравнение Pini Kay и обычного угля" />
+        <meta property="og:description" content="Сравнение по времени горения, температуре, расходу и стоимости для хосперов и мангалов." />
+        <meta property="og:url" content="https://briket-berry.ru/comparison" />
       </Helmet>
 
       {/* Hero */}
@@ -110,7 +115,7 @@ export default function ComparisonPage() {
             <div className="text-center mb-12">
               <TrendingDown className="w-10 h-10 text-brand-orange mx-auto mb-4" />
               <h2 className="section-title mb-4">Экономический расчёт</h2>
-              <p className="section-subtitle">Ресторан с 2 хосперами, 12 часов работы в день</p>
+              <p className="section-subtitle">Ресторан с 1 хоспером, 12 часов работы в день</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -121,12 +126,12 @@ export default function ComparisonPage() {
                   label: '❌ Невыгодно',
                   items: [
                     { label: 'Расход / хоспер / день', value: '30 кг (6 мешков по 5 кг)' },
-                    { label: 'Итого в день (×2)', value: '60 кг (12 мешков)' },
-                    { label: 'Стоимость / день', value: '5 400 ₽' },
-                    { label: 'В месяц (25 дней)', value: '135 000 ₽' },
-                    { label: 'В год', value: '1 620 000 ₽' },
+                    { label: 'Итого в день', value: '30 кг (6 мешков)' },
+                    { label: 'Стоимость / день', value: '2 700 ₽' },
+                    { label: 'В месяц (25 дней)', value: '67 500 ₽' },
+                    { label: 'В год', value: '810 000 ₽' },
                   ],
-                  total: '1 620 000 ₽/год',
+                  total: '810 000 ₽/год',
                   totalColor: 'text-red-400',
                 },
                 {
@@ -135,12 +140,12 @@ export default function ComparisonPage() {
                   label: '✅ Выгоднее',
                   items: [
                     { label: 'Расход / хоспер / день', value: '10 кг (1 коробка)' },
-                    { label: 'Итого в день (×2)', value: '20 кг (2 коробки)' },
-                    { label: 'Стоимость / день', value: '1 780 ₽' },
-                    { label: 'В месяц (25 дней)', value: '44 500 ₽' },
-                    { label: 'В год', value: '534 000 ₽' },
+                    { label: 'Итого в день', value: '10 кг (1 коробка)' },
+                    { label: 'Стоимость / день', value: '890 ₽' },
+                    { label: 'В месяц (25 дней)', value: '22 250 ₽' },
+                    { label: 'В год', value: '267 000 ₽' },
                   ],
-                  total: '534 000 ₽/год',
+                  total: '267 000 ₽/год',
                   totalColor: 'text-green-400',
                 },
               ].map((col) => (

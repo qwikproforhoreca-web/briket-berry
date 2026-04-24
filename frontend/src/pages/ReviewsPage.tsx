@@ -89,6 +89,11 @@ export default function ReviewsPage() {
           name="description"
           content="Реальные отзывы шеф-поваров и владельцев ресторанов о брикетах Pini Kay. 500+ довольных клиентов"
         />
+        <meta name="robots" content="index,follow" />
+        <link rel="canonical" href="https://briket-berry.ru/reviews" />
+        <meta property="og:title" content="Отзывы о брикетах Pini Kay от ресторанов" />
+        <meta property="og:description" content="Реальные кейсы и отзывы заведений по работе на брикетах Pini Kay." />
+        <meta property="og:url" content="https://briket-berry.ru/reviews" />
         <script type="application/ld+json">{JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'Product',

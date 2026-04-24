@@ -9,10 +9,11 @@ import { useSettings } from '@/hooks/useSettings'
 const navLinks = [
   { href: '/', label: 'Главная' },
   { href: '/products', label: 'Продукты' },
+  { href: '/prices', label: 'Цены' },
+  { href: '/cases', label: 'Кейсы' },
   { href: '/firestarters', label: 'Розжиг' },
-  { href: '/how-to-use', label: 'Как использовать' },
-  { href: '/comparison', label: 'Сравнение' },
-  { href: '/reviews', label: 'Отзывы' },
+  { href: '/blog', label: 'Блог' },
+  { href: '/contacts', label: 'Контакты' },
 ]
 
 export default function Header() {

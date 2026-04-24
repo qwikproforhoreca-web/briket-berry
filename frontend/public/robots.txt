@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Restrict admin and private areas from indexing
+Disallow: /admin
+Disallow: /admin/
+Disallow: /order/success
+
+Host: https://briket-berry.ru
+Sitemap: https://briket-berry.ru/sitemap.xml

@@ -11,10 +11,14 @@ const footerLinks = {
     { href: '/comparison', label: 'Сравнение с аналогами' },
   ],
   company: [
+    { href: '/about', label: 'О компании' },
+    { href: '/cases', label: 'Кейсы' },
+    { href: '/prices', label: 'Цены' },
+    { href: '/faq', label: 'FAQ' },
+    { href: '/blog', label: 'Блог' },
+    { href: '/contacts', label: 'Контакты' },
     { href: '/reviews', label: 'Отзывы клиентов' },
     { href: '/order', label: 'Оставить заявку' },
-    { href: '/order', label: 'Оптовые цены' },
-    { href: '/#faq', label: 'Часто задаваемые вопросы' },
   ],
 }
 

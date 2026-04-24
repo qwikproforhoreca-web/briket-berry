@@ -56,14 +56,6 @@ function pickTopProduct(list: ApiProduct[], desiredCategory: ApiProductCategory)
     .find((p) => p.inStock !== false) ?? items[0]
 }
 
-function getSpecsValue(specs: ApiProduct['specs'] | undefined, key: string, fallback: string) {
-  if (!specs) return fallback
-  const v = specs[key]
-  if (v === null || typeof v === 'undefined') return fallback
-  const s = String(v).trim()
-  return s ? s : fallback
-}
-
 export default function ProductsPreview() {
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
@@ -88,7 +80,6 @@ export default function ProductsPreview() {
     const firestarters = pickTopProduct(list, 'FIRESTARTERS')
 
     const makeCard = (p: ApiProduct, category: CatalogCategory) => {
-      const specs = p.specs
       const image = resolveImageUrl(Array.isArray(p.images) && p.images[0] ? String(p.images[0]) : '')
 
       const badge =
@@ -113,33 +104,18 @@ export default function ProductsPreview() {
             : 'опт от 20 упаковок: 100 ₽'
           : 'опт по запросу'
 
-      const iconList = [Clock, Thermometer, Package]
-      const specEntries = Object.entries(specs || {})
-        .filter(([, v]) => v != null && String(v).trim() !== '')
-        // убираем дубли по тексту фич
-        .filter((entry, idx, arr) => arr.findIndex((e) => String(e[1]).trim() === String(entry[1]).trim()) === idx)
-        .slice(0, 3)
-
-      const fallbackFeatures =
+      const features =
         category === 'briquettes'
           ? [
-              { icon: Clock, text: 'До 12 часов горения' },
+              { icon: Clock, text: 'До 8 часов горения' },
               { icon: Thermometer, text: '900°C температура' },
               { icon: Package, text: 'Без дыма и запаха' },
             ]
           : [
-              { icon: Clock, text: '10 минут горения' },
-              { icon: Thermometer, text: 'Без химии' },
-              { icon: Package, text: 'Розжиг за 5-7 минут' },
+              { icon: Clock, text: 'Розжиг за 5–7 минут' },
+              { icon: Thermometer, text: 'Без жидкости — натуральный парафин' },
+              { icon: Package, text: 'Без дыма и запаха' },
             ]
-
-      const features =
-        specEntries.length > 0
-          ? specEntries.map(([, v], i) => ({
-              icon: iconList[i % iconList.length],
-              text: String(v).trim(),
-            }))
-          : fallbackFeatures
 
       const gradient = category === 'briquettes' ? 'from-brand-orange/20 to-transparent' : 'from-green-500/10 to-transparent'
 
@@ -177,9 +153,9 @@ export default function ProductsPreview() {
           badge: '🔥 Хит продаж',
           badgeColor: 'bg-brand-orange/20 text-brand-orange border-brand-orange/30',
           features: [
-            { icon: Clock, text: 'До 12 часов горения' },
+            { icon: Clock, text: 'До 8 часов горения' },
             { icon: Thermometer, text: '900°C температура' },
-            { icon: Package, text: 'Без дыма и золы' },
+            { icon: Package, text: 'Без дыма и запаха' },
           ],
           href: '/products',
           gradient: 'from-brand-orange/20 to-transparent',
@@ -195,9 +171,9 @@ export default function ProductsPreview() {
           badge: '✨ Экологичный',
           badgeColor: 'bg-green-500/20 text-green-400 border-green-500/30',
           features: [
-            { icon: Clock, text: '10 минут горения' },
-            { icon: Thermometer, text: 'Без химии' },
-            { icon: Package, text: 'Розжиг за 5 минут' },
+            { icon: Clock, text: 'Розжиг за 5–7 минут' },
+            { icon: Thermometer, text: 'Без жидкости — натуральный парафин' },
+            { icon: Package, text: 'Без дыма и запаха' },
           ],
           href: '/products',
           gradient: 'from-green-500/10 to-transparent',
@@ -222,9 +198,9 @@ export default function ProductsPreview() {
             badge: '✨ Экологичный',
             badgeColor: 'bg-green-500/20 text-green-400 border-green-500/30',
             features: [
-              { icon: Clock, text: '10 минут горения' },
-              { icon: Thermometer, text: 'Без химии' },
-              { icon: Package, text: 'Розжиг за 5 минут' },
+              { icon: Clock, text: 'Розжиг за 5–7 минут' },
+              { icon: Thermometer, text: 'Без жидкости — натуральный парафин' },
+              { icon: Package, text: 'Без дыма и запаха' },
             ],
             href: '/products',
             gradient: 'from-green-500/10 to-transparent',
@@ -244,9 +220,9 @@ export default function ProductsPreview() {
           badge: '🔥 Хит продаж',
           badgeColor: 'bg-brand-orange/20 text-brand-orange border-brand-orange/30',
           features: [
-            { icon: Clock, text: 'До 12 часов горения' },
+            { icon: Clock, text: 'До 8 часов горения' },
             { icon: Thermometer, text: '900°C температура' },
-            { icon: Package, text: 'Без дыма и золы' },
+            { icon: Package, text: 'Без дыма и запаха' },
           ],
           href: '/products',
           gradient: 'from-brand-orange/20 to-transparent',

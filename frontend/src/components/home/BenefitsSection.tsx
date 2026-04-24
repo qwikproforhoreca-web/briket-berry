@@ -5,7 +5,7 @@ import { Clock, Wind, Leaf, TrendingDown, Thermometer, Package } from 'lucide-re
 const benefits = [
   {
     icon: Clock,
-    title: 'До 12 часов горения',
+    title: 'До 8 часов горения',
     description: 'Загрузил один раз — работаешь весь день. Не нужно постоянно доливать и следить за жаром.',
     glow: 'rgba(255, 107, 43, 0.3)',
   },

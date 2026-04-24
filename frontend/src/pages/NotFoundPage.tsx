@@ -7,6 +7,7 @@ export default function NotFoundPage() {
     <>
       <Helmet>
         <title>Страница не найдена | Брикет-Бери</title>
+        <meta name="robots" content="noindex,nofollow" />
       </Helmet>
       <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center text-center px-4">
         <div>

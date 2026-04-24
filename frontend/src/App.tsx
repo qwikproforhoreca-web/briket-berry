@@ -11,6 +11,13 @@ const FirestartersPage = lazy(() => import('@/pages/FirestartersPage'))
 const HowToUsePage = lazy(() => import('@/pages/HowToUsePage'))
 const ComparisonPage = lazy(() => import('@/pages/ComparisonPage'))
 const ReviewsPage = lazy(() => import('@/pages/ReviewsPage'))
+const AboutPage = lazy(() => import('@/pages/AboutPage'))
+const CasesPage = lazy(() => import('@/pages/CasesPage'))
+const PricesPage = lazy(() => import('@/pages/PricesPage'))
+const FaqPage = lazy(() => import('@/pages/FaqPage'))
+const ContactsPage = lazy(() => import('@/pages/ContactsPage'))
+const BlogPage = lazy(() => import('@/pages/BlogPage'))
+const BlogArticlePage = lazy(() => import('@/pages/BlogArticlePage'))
 const OrderPage = lazy(() => import('@/pages/OrderPage'))
 const OrderSuccessPage = lazy(() => import('@/pages/OrderSuccessPage'))
 const PrivacyPage = lazy(() => import('@/pages/PrivacyPage'))
@@ -39,6 +46,13 @@ export default function App() {
             <Route path="/how-to-use" element={<HowToUsePage />} />
             <Route path="/comparison" element={<ComparisonPage />} />
             <Route path="/reviews" element={<ReviewsPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/cases" element={<CasesPage />} />
+            <Route path="/prices" element={<PricesPage />} />
+            <Route path="/faq" element={<FaqPage />} />
+            <Route path="/contacts" element={<ContactsPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog/:slug" element={<BlogArticlePage />} />
             <Route path="/order" element={<OrderPage />} />
             <Route path="/order/success" element={<OrderSuccessPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />

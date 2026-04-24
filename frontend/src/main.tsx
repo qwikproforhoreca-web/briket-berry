@@ -7,8 +7,8 @@ import axios from 'axios'
 import App from './App.tsx'
 import './styles/globals.css'
 
-// В продакшене направляем API запросы на Railway backend
-if (import.meta.env.VITE_API_URL) {
+// В продакшене можно задать absolute API URL, либо оставить same-origin.
+if (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL !== 'same-origin') {
   axios.defaults.baseURL = import.meta.env.VITE_API_URL
 }
 

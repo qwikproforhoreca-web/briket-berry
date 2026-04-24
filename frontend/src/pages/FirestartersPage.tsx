@@ -78,7 +78,11 @@ export default function FirestartersPage() {
           content="Экологичный парафиновый розжиг Pini Kay — горит 8–12 минут, без запаха, без химии. Идеален для хоспера, мангала, камина, тандыра. Купить оптом для ресторана."
         />
         <meta name="keywords" content="парафиновый розжиг, розжиг для мангала, розжиг для хоспера, розжиг для камина, кубики розжига, экологичный розжиг, оптовый розжиг ресторан" />
+        <meta name="robots" content="index,follow" />
         <link rel="canonical" href="https://briket-berry.ru/firestarters" />
+        <meta property="og:title" content="Парафиновый розжиг для хоспера и мангала" />
+        <meta property="og:description" content="Розжиг Pini Kay для ресторанов и кафе: быстро, без запаха, без химии." />
+        <meta property="og:url" content="https://briket-berry.ru/firestarters" />
       </Helmet>
 
       {/* Hero */}

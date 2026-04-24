@@ -19,7 +19,7 @@ const stats: Stat[] = [
     color: 'from-brand-orange to-brand-orange-dark',
   },
   {
-    value: 12,
+    value: 8,
     suffix: ' часов',
     label: 'Непрерывного горения',
     description: 'Без дозагрузки и поддержки огня',

@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import compression from 'compression'
 import cookieParser from 'cookie-parser'
+import fs from 'fs'
 import path from 'path'
 import dotenv from 'dotenv'
 
@@ -38,6 +39,8 @@ app.use(helmet({
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:3000',
   'http://localhost:5173',
+  'https://briket-berry.ru',
+  'https://www.briket-berry.ru',
 ]
 app.use(cors({
   origin: (origin, callback) => {
@@ -84,6 +87,27 @@ app.use('/api/v1/ai', aiRouter)
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
+
+// Serve frontend (SPA) from monorepo build when available.
+const frontendDistCandidates = [
+  process.env.FRONTEND_DIST_PATH,
+  path.resolve(__dirname, '..', '..', 'frontend', 'dist'),
+  path.resolve(__dirname, '..', 'frontend-dist'),
+].filter((value): value is string => Boolean(value))
+
+const frontendDistPath = frontendDistCandidates.find((candidate) =>
+  fs.existsSync(path.join(candidate, 'index.html')),
+)
+
+if (frontendDistPath) {
+  app.use(express.static(frontendDistPath))
+  app.get(/^\/(?!api\/).*/, (_req, res) => {
+    res.sendFile(path.join(frontendDistPath, 'index.html'))
+  })
+  console.log(`✅ Frontend static enabled: ${frontendDistPath}`)
+} else {
+  console.warn('⚠️ Frontend dist not found, API-only mode is active')
+}
 
 // 404
 app.use((_req, res) => {
