@@ -6,5 +6,5 @@ Disallow: /admin
 Disallow: /admin/
 Disallow: /order/success
 
-Host: https://briket-berry.ru
+Host: briket-berry.ru
 Sitemap: https://briket-berry.ru/sitemap.xml

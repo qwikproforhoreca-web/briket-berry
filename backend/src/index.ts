@@ -26,6 +26,130 @@ import { getMailWebhookDebug } from './utils/mailWebhook'
 
 const app = express()
 const PORT = process.env.PORT || 5000
+const PRIMARY_HOST = 'briket-berry.ru'
+const WWW_HOST = 'www.briket-berry.ru'
+const SITE_URL = `https://${PRIMARY_HOST}`
+
+type SeoMeta = {
+  title: string
+  description: string
+  robots?: string
+}
+
+const SEO_META_BY_PATH: Record<string, SeoMeta> = {
+  '/': {
+    title: 'Угольные брикеты Pini Kay для ресторанов и кафе | Брикет-Бери',
+    description: 'Профессиональные угольные брикеты Pini Kay: до 8 часов горения, высокая температура и поставки по России.',
+  },
+  '/products': {
+    title: 'Купить угольные брикеты Pini Kay оптом | Брикет-Бери',
+    description: 'Каталог брикетов и розжига Pini Kay для HoReCa: стабильный жар, чистое горение и оптовые поставки.',
+  },
+  '/firestarters': {
+    title: 'Парафиновый розжиг для мангала и хоспера | Брикет-Бери',
+    description: 'Парафиновый розжиг Pini Kay: быстрое и чистое воспламенение без запаха и лишнего дыма.',
+  },
+  '/how-to-use': {
+    title: 'Как использовать брикеты Pini Kay | Брикет-Бери',
+    description: 'Пошаговая инструкция по розжигу и работе с брикетами Pini Kay для хосперов и гриля.',
+  },
+  '/comparison': {
+    title: 'Pini Kay vs обычный уголь — сравнение | Брикет-Бери',
+    description: 'Сравнение Pini Kay с обычным углем по горению, температуре, расходу и экономике для заведений.',
+  },
+  '/reviews': {
+    title: 'Отзывы клиентов об угольных брикетах Pini Kay | Брикет-Бери',
+    description: 'Реальные отзывы и опыт заведений, использующих брикеты Pini Kay в профессиональной кухне.',
+  },
+  '/about': {
+    title: 'О компании Брикет-Бери | Поставщик Pini Kay',
+    description: 'Брикет-Бери — поставщик брикетов Pini Kay и розжига для ресторанов, кафе и гриль-заведений.',
+  },
+  '/prices': {
+    title: 'Цены на брикеты и розжиг Pini Kay | Брикет-Бери',
+    description: 'Актуальные цены и условия оптовых поставок брикетов Pini Kay и парафинового розжига.',
+  },
+  '/faq': {
+    title: 'FAQ по брикетам Pini Kay | Брикет-Бери',
+    description: 'Ответы на частые вопросы по хранению, розжигу и использованию брикетов Pini Kay.',
+  },
+  '/contacts': {
+    title: 'Контакты Брикет-Бери | Поставки по России',
+    description: 'Контакты и каналы связи для заказа брикетов Pini Kay и консультации по поставкам.',
+  },
+  '/blog': {
+    title: 'Блог о брикетном угле и хосперах | Брикет-Бери',
+    description: 'Экспертные статьи о выборе брикетов, работе с хоспером и снижении затрат кухни.',
+  },
+  '/order': {
+    title: 'Оставить заявку на угольные брикеты | Брикет-Бери',
+    description: 'Оформите заявку на брикеты Pini Kay и розжиг для ресторана, кафе или гриль-заведения.',
+  },
+  '/order/success': {
+    title: 'Заявка принята | Брикет-Бери',
+    description: 'Ваша заявка принята. Мы свяжемся с вами для подтверждения деталей поставки.',
+    robots: 'noindex,nofollow',
+  },
+  '/privacy': {
+    title: 'Политика конфиденциальности | Брикет-Бери',
+    description: 'Политика обработки персональных данных сайта Брикет-Бери.',
+  },
+  '/terms': {
+    title: 'Пользовательское соглашение | Брикет-Бери',
+    description: 'Пользовательское соглашение и условия использования сайта Брикет-Бери.',
+  },
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+function normalizePathname(pathname: string) {
+  if (!pathname || pathname === '/') return '/'
+  return pathname.endsWith('/') ? pathname.slice(0, -1) : pathname
+}
+
+function getSeoMetaForPath(pathname: string): SeoMeta {
+  const normalized = normalizePathname(pathname)
+  if (normalized.startsWith('/blog/')) {
+    return {
+      title: 'Статья блога | Брикет-Бери',
+      description: 'Материалы Брикет-Бери о брикетах Pini Kay, работе с хоспером и экономике кухни.',
+    }
+  }
+  if (normalized.startsWith('/admin')) {
+    return {
+      title: 'Панель управления | Брикет-Бери',
+      description: 'Административный раздел сайта Брикет-Бери.',
+      robots: 'noindex,nofollow',
+    }
+  }
+  return SEO_META_BY_PATH[normalized] || SEO_META_BY_PATH['/']
+}
+
+function renderSeoHtml(template: string, pathname: string) {
+  const normalized = normalizePathname(pathname)
+  const seo = getSeoMetaForPath(normalized)
+  const canonicalUrl = `${SITE_URL}${normalized === '/' ? '/' : normalized}`
+  const title = escapeHtml(seo.title)
+  const description = escapeHtml(seo.description)
+  const robots = escapeHtml(seo.robots || 'index,follow')
+
+  return template
+    .replace(/<title>[\s\S]*?<\/title>/, `<title>${title}</title>`)
+    .replace(/<meta name="description" content="[\s\S]*?" \/>/, `<meta name="description" content="${description}" />`)
+    .replace(/<meta name="robots" content="[\s\S]*?" \/>/, `<meta name="robots" content="${robots}" />`)
+    .replace(/<link rel="canonical" href="[\s\S]*?" \/>/, `<link rel="canonical" href="${canonicalUrl}" />`)
+    .replace(/<meta property="og:title" content="[\s\S]*?" \/>/, `<meta property="og:title" content="${title}" />`)
+    .replace(/<meta property="og:description" content="[\s\S]*?" \/>/, `<meta property="og:description" content="${description}" />`)
+    .replace(/<meta property="og:url" content="[\s\S]*?" \/>/, `<meta property="og:url" content="${canonicalUrl}" />`)
+    .replace(/<meta name="twitter:title" content="[\s\S]*?" \/>/, `<meta name="twitter:title" content="${title}" />`)
+    .replace(/<meta name="twitter:description" content="[\s\S]*?" \/>/, `<meta name="twitter:description" content="${description}" />`)
+}
 
 // Trust Railway/Nginx proxy
 app.set('trust proxy', 1)
@@ -78,6 +202,15 @@ app.use('/api/', generalLimiter)
 // Static uploads
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')))
 
+// Keep a single canonical host for SEO signals.
+app.use((req, res, next) => {
+  const hostHeader = req.headers.host?.split(':')[0]?.toLowerCase()
+  if (process.env.NODE_ENV === 'production' && hostHeader === WWW_HOST) {
+    return res.redirect(301, `https://${PRIMARY_HOST}${req.originalUrl}`)
+  }
+  next()
+})
+
 // Routes
 app.use('/api/v1/orders', ordersRouter)
 app.use('/api/v1/clients', clientsRouter)
@@ -106,9 +239,23 @@ const frontendDistPath = frontendDistCandidates.find((candidate) =>
 )
 
 if (frontendDistPath) {
+  const indexHtmlPath = path.join(frontendDistPath, 'index.html')
+  const indexHtmlTemplate = fs.readFileSync(indexHtmlPath, 'utf8')
+
+  // Ensure crawlers always get indexability files, even with SPA fallback.
+  app.get('/robots.txt', (_req, res) => {
+    res.type('text/plain')
+    res.sendFile(path.join(frontendDistPath, 'robots.txt'))
+  })
+  app.get('/sitemap.xml', (_req, res) => {
+    res.type('application/xml')
+    res.sendFile(path.join(frontendDistPath, 'sitemap.xml'))
+  })
+
   app.use(express.static(frontendDistPath))
-  app.get(/^\/(?!api\/).*/, (_req, res) => {
-    res.sendFile(path.join(frontendDistPath, 'index.html'))
+  app.get(/^\/(?!api\/).*/, (req, res) => {
+    const html = renderSeoHtml(indexHtmlTemplate, req.path)
+    res.status(200).type('html').send(html)
   })
   console.log(`✅ Frontend static enabled: ${frontendDistPath}`)
 } else {
