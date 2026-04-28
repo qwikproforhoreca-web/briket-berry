@@ -26,8 +26,8 @@ import { getMailWebhookDebug } from './utils/mailWebhook'
 
 const app = express()
 const PORT = process.env.PORT || 5000
-const PRIMARY_HOST = 'briket-berry.ru'
-const WWW_HOST = 'www.briket-berry.ru'
+const PRIMARY_HOST = 'www.briket-berry.ru'
+const APEX_HOST = 'briket-berry.ru'
 const SITE_URL = `https://${PRIMARY_HOST}`
 
 type SeoMeta = {
@@ -205,7 +205,7 @@ app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')))
 // Keep a single canonical host for SEO signals.
 app.use((req, res, next) => {
   const hostHeader = req.headers.host?.split(':')[0]?.toLowerCase()
-  if (process.env.NODE_ENV === 'production' && hostHeader === WWW_HOST) {
+  if (process.env.NODE_ENV === 'production' && hostHeader === APEX_HOST) {
     return res.redirect(301, `https://${PRIMARY_HOST}${req.originalUrl}`)
   }
   next()
