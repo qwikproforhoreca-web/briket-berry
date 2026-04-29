@@ -42,8 +42,8 @@ function getOrderPricing(product: Product) {
   const sku = String(product.sku || '').toUpperCase()
 
   // Keep request-form pricing stable even if legacy DB values differ.
-  if (sku === 'PFR-8') return { regular, wholesale: 100, wholesaleMin: 50 }
-  if (sku === 'PKB-10') return { regular, wholesale: 835, wholesaleMin: 20 }
+  if (sku === 'PFR-8') return { regular: 120, wholesale: 100, wholesaleMin: 50 }
+  if (sku === 'PKB-10') return { regular: 890, wholesale: 835, wholesaleMin: 20 }
 
   const wholesale = product.priceWholesale != null ? Number(product.priceWholesale) : regular
   const wholesaleMin = Number(product.wholesaleMinQty || 1)
@@ -548,9 +548,7 @@ export default function OrderPage() {
                     {products.map((item) => {
                       const qty = quantities[item.id] || 0
                       if (!qty) return null
-                      const regular = Number(item.price || 0)
-                      const wholesale = item.priceWholesale != null ? Number(item.priceWholesale) : regular
-                      const wholesaleMin = Number(item.wholesaleMinQty || 1)
+                      const { regular, wholesale, wholesaleMin } = getOrderPricing(item)
                       const unitPrice = qty >= wholesaleMin ? wholesale : regular
                       return (
                         <div key={item.id} className="flex justify-between py-2 border-b border-white/5 text-sm">

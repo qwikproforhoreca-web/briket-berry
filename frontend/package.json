@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "node ./node_modules/eslint/bin/eslint.js . --format json-with-metadata",
+    "test:order-pricing": "node ./scripts/order-pricing.test.cjs",
     "preview": "vite preview"
   },
   "dependencies": {
