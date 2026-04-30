@@ -14,7 +14,7 @@ const footerLinks = {
     { href: '/about', label: 'О компании' },
     { href: '/cases', label: 'Кейсы' },
     { href: '/prices', label: 'Цены' },
-    { href: '/faq', label: 'FAQ' },
+    { href: '/faq', label: 'Частые вопросы' },
     { href: '/blog', label: 'Блог' },
     { href: '/contacts', label: 'Контакты' },
     { href: '/reviews', label: 'Отзывы клиентов' },
@@ -164,6 +164,9 @@ export default function Footer() {
           <div className="flex gap-6">
             <Link to="/privacy" className="text-white/30 hover:text-white/60 text-xs transition-colors">
               Политика конфиденциальности
+            </Link>
+            <Link to="/consent" className="text-white/30 hover:text-white/60 text-xs transition-colors">
+              Согласие на обработку ПДн
             </Link>
             <Link to="/terms" className="text-white/30 hover:text-white/60 text-xs transition-colors">
               Условия использования

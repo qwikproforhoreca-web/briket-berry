@@ -53,7 +53,7 @@ export default function ContactsPage() {
             </a>
             <a href={`mailto:${settings.email}`} className="card p-6 hover:border-brand-orange/30 transition-colors">
               <Mail className="w-5 h-5 text-brand-orange mb-3" />
-              <div className="text-white font-semibold mb-1">Email</div>
+              <div className="text-white font-semibold mb-1">Эл. почта</div>
               <div className="text-white/60 text-sm">{settings.email}</div>
             </a>
             <div className="card p-6">

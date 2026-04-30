@@ -24,14 +24,14 @@ export default function FaqPage() {
   return (
     <>
       <Helmet>
-        <title>FAQ по угольным брикетам Pini Kay | Брикет-Бери</title>
+        <title>Частые вопросы по брикетам Pini Kay | Брикет-Бери</title>
         <meta
           name="description"
           content="Ответы на частые вопросы о брикетах Pini Kay: время горения, применение в хосперах, опт, доставка и хранение."
         />
         <meta name="robots" content="index,follow" />
         <link rel="canonical" href="https://briket-berry.ru/faq" />
-        <meta property="og:title" content="FAQ по брикетам Pini Kay" />
+        <meta property="og:title" content="Частые вопросы по брикетам Pini Kay" />
         <meta property="og:description" content="Частые вопросы и ответы по использованию и закупке брикетного угля." />
         <meta property="og:url" content="https://briket-berry.ru/faq" />
         <script type="application/ld+json">{JSON.stringify({

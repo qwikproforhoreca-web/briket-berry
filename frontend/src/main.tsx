@@ -6,10 +6,16 @@ import { HelmetProvider } from 'react-helmet-async'
 import axios from 'axios'
 import App from './App.tsx'
 import './styles/globals.css'
+import { hasAnalyticsConsent } from '@/utils/consent'
+import { initYandexMetrika } from '@/utils/analytics'
 
 // В продакшене можно задать absolute API URL, либо оставить same-origin.
 if (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL !== 'same-origin') {
   axios.defaults.baseURL = import.meta.env.VITE_API_URL
+}
+
+if (hasAnalyticsConsent()) {
+  initYandexMetrika()
 }
 
 // Attach admin token from localStorage for cross-domain auth

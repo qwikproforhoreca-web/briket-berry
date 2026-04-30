@@ -421,7 +421,7 @@ export default function OrderPage() {
                         </div>
 
                         <div>
-                          <label className="text-white/60 text-sm mb-1.5 block">Email (для копии)</label>
+                          <label className="text-white/60 text-sm mb-1.5 block">Эл. почта (для копии)</label>
                           <input {...register('email')} placeholder="email@example.ru" type="email" className="input-field" />
                         </div>
 
@@ -479,7 +479,16 @@ export default function OrderPage() {
                           </div>
                         )}
 
-                        {/* Privacy consent */}
+                        <div className="p-3 rounded-xl border border-white/10 bg-[#111111] text-white/55 text-xs leading-relaxed">
+                          Оператор персональных данных: «Брикет-Бери», email:{' '}
+                          <a href="mailto:info@briket-berry.ru" className="text-brand-orange hover:underline">
+                            info@briket-berry.ru
+                          </a>
+                          . Цель сбора данных: обработка и подтверждение заявки, связь с клиентом,
+                          подготовка и исполнение договора поставки.
+                        </div>
+
+                        {/* Personal data consent */}
                         <label className="flex items-start gap-3 cursor-pointer group">
                           <input
                             type="checkbox"
@@ -487,9 +496,10 @@ export default function OrderPage() {
                             className="w-4 h-4 mt-0.5 rounded border-white/20 bg-[#1A1A1A] text-brand-orange focus:ring-brand-orange/30 flex-shrink-0"
                           />
                           <span className="text-white/40 text-xs leading-relaxed group-hover:text-white/60 transition-colors">
-                            Я соглашаюсь с{' '}
-                            <a href="/privacy" className="text-brand-orange hover:underline">политикой конфиденциальности</a>{' '}
-                            и даю согласие на обработку персональных данных
+                            Я даю согласие на обработку персональных данных и принимаю условия{' '}
+                            <a href="/privacy" className="text-brand-orange hover:underline">политики конфиденциальности</a>{' '}
+                            и{' '}
+                            <a href="/consent" className="text-brand-orange hover:underline">согласия на обработку ПДн</a>
                           </span>
                         </label>
                         {errors.privacyConsent && (

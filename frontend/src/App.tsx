@@ -4,6 +4,8 @@ import Layout from '@/components/layout/Layout'
 import AdminLayout from '@/components/admin/AdminLayout'
 import LoadingScreen from '@/components/ui/LoadingScreen'
 import AiChatWidget from '@/components/ai/AiChatWidget'
+import CookieConsentBanner from '@/components/common/CookieConsentBanner'
+import { initYandexMetrika } from '@/utils/analytics'
 
 const HomePage = lazy(() => import('@/pages/HomePage'))
 const ProductsPage = lazy(() => import('@/pages/ProductsPage'))
@@ -22,6 +24,7 @@ const OrderPage = lazy(() => import('@/pages/OrderPage'))
 const OrderSuccessPage = lazy(() => import('@/pages/OrderSuccessPage'))
 const PrivacyPage = lazy(() => import('@/pages/PrivacyPage'))
 const TermsPage = lazy(() => import('@/pages/TermsPage'))
+const ConsentPage = lazy(() => import('@/pages/ConsentPage'))
 const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage'))
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'))
 const AdminOrdersPage = lazy(() => import('@/pages/admin/AdminOrdersPage'))
@@ -57,6 +60,7 @@ export default function App() {
             <Route path="/order/success" element={<OrderSuccessPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
+            <Route path="/consent" element={<ConsentPage />} />
           </Route>
 
           {/* Admin Routes */}
@@ -76,6 +80,7 @@ export default function App() {
       </Suspense>
 
       {showAiWidget && <AiChatWidget />}
+      <CookieConsentBanner onAccept={initYandexMetrika} />
     </>
   )
 }
