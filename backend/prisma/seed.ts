@@ -170,11 +170,11 @@ async function main() {
   // Settings
   const settings = [
     { key: 'site.name', value: 'Брикет-Бери', type: 'STRING', label: 'Название сайта', group: 'general' },
-    { key: 'site.phone', value: '+7 (900) 000-00-00', type: 'STRING', label: 'Телефон', group: 'general' },
-    { key: 'site.whatsapp', value: '+79000000000', type: 'STRING', label: 'WhatsApp', group: 'general' },
+    { key: 'site.phone', value: '+7 (906) 490-22-48', type: 'STRING', label: 'Телефон', group: 'general' },
+    { key: 'site.whatsapp', value: '+79064902248', type: 'STRING', label: 'WhatsApp', group: 'general' },
     { key: 'site.telegram', value: '@briket_beri', type: 'STRING', label: 'Telegram', group: 'general' },
-    { key: 'site.email', value: 'info@briket-berry.ru', type: 'STRING', label: 'Email', group: 'general' },
-    { key: 'site.address', value: 'Москва · Пн–Пт 10:00 – 18:00', type: 'STRING', label: 'Адрес / Часы работы', group: 'general' },
+    { key: 'site.email', value: 'bessonov@briket-berry.ru', type: 'STRING', label: 'Email', group: 'general' },
+    { key: 'site.address', value: '355021, Ставропольский край, г. Ставрополь, ул. Родосская 1, кв. 166', type: 'STRING', label: 'Адрес / Часы работы', group: 'general' },
     { key: 'site.workingHours', value: 'Пн–Пт: 10:00 – 18:00', type: 'STRING', label: 'Часы работы', group: 'general' },
     { key: 'hero.videoUrl', value: '/videos/charcoal-bg.mp4', type: 'URL', label: 'Фоновое видео', group: 'video' },
     { key: 'tutorial.videoUrl', value: '/videos/tutorial.mp4', type: 'URL', label: 'Видео-инструкция', group: 'video' },
