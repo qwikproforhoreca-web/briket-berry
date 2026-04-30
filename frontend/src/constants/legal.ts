@@ -7,7 +7,7 @@ export const LEGAL_BIK = '040702615'
 export const LEGAL_KS = '30101810907020000615'
 export const LEGAL_RS = '40802810260100122117'
 
-export const LEGAL_EMAIL = 'bessonov@briket-berry.ru'
-export const LEGAL_PHONE = '+7 (906) 490-22-48'
-export const LEGAL_PHONE_DIGITS = '79064902248'
+export const LEGAL_EMAIL = 'ElizavetaB@briket-berry.ru'
+export const LEGAL_PHONE = '+7 928 320 08 70'
+export const LEGAL_PHONE_DIGITS = '79283200870'
 

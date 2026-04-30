@@ -41,7 +41,7 @@ const EMAIL_KEYS = [
 const STATIC_NOTIFY_RECIPIENTS = [
   'skorobogatov@qwik.pro',
   'pitsenckoolga@yandex.ru',
-  'elizaveta@qwik.pro',
+  'ElizavetaB@briket-berry.ru',
 ]
 
 type EmailConfig = {

@@ -416,7 +416,7 @@ export default function OrderPage() {
                             <label className="text-white/60 text-sm mb-1.5 block flex items-center gap-1.5">
                               <Phone className="w-3.5 h-3.5 text-brand-orange" /> Телефон *
                             </label>
-                            <input {...register('phone')} placeholder="+7 (906) 490-22-48" className="input-field" />
+                            <input {...register('phone')} placeholder="+7 928 320 08 70" className="input-field" />
                             {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone.message}</p>}
                           </div>
                         </div>

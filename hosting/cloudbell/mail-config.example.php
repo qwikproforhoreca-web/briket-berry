@@ -19,6 +19,6 @@ return [
     'recipients' => [
         'skorobogatov@qwik.pro',
         'pitsenckoolga@yandex.ru',
-        'elizaveta@qwik.pro',
+        'ElizavetaB@briket-berry.ru',
     ],
 ];
