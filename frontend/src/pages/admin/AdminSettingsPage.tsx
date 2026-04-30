@@ -141,11 +141,11 @@ export default function AdminSettingsPage() {
             <>
               <h2 className="font-semibold text-white">Общие настройки</h2>
               {[
-                { key: 'site.phone', label: 'Телефон', placeholder: '+7 (900) 000-00-00' },
-                { key: 'site.whatsapp', label: 'WhatsApp', placeholder: '+79000000000' },
+                { key: 'site.phone', label: 'Телефон', placeholder: '+7 (906) 490-22-48' },
+                { key: 'site.whatsapp', label: 'WhatsApp', placeholder: '+79064902248' },
                 { key: 'site.telegram', label: 'Telegram username', placeholder: '@briket_beri' },
                 { key: 'site.max', label: 'MAX messenger username', placeholder: 'briket_beri' },
-                { key: 'site.email', label: 'Email', placeholder: 'info@briket-berry.ru' },
+                { key: 'site.email', label: 'Email', placeholder: 'bessonov@briket-berry.ru' },
                 { key: 'site.address', label: 'Адрес', placeholder: 'Москва' },
               ].map((field) => (
                 <SettingField
@@ -291,7 +291,7 @@ export default function AdminSettingsPage() {
               {[
                 { key: 'email.smtpHost', label: 'SMTP Host', placeholder: 'smtp.mail.ru' },
                 { key: 'email.smtpPort', label: 'SMTP Port', placeholder: '465' },
-                { key: 'email.user', label: 'Пользователь', placeholder: 'info@briket-berry.ru' },
+                { key: 'email.user', label: 'Пользователь', placeholder: 'bessonov@briket-berry.ru' },
                 { key: 'email.password', label: 'Пароль', placeholder: '••••••••', secret: true },
               ].map((field) => (
                 <SettingField

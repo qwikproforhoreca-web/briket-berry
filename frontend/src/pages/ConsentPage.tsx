@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async'
+import { LEGAL_EMAIL, LEGAL_ENTITY_NAME } from '@/constants/legal'
 
 export default function ConsentPage() {
   return (
@@ -25,7 +26,7 @@ export default function ConsentPage() {
           <div className="space-y-6 text-white/65 text-sm leading-relaxed">
             <p>
               Настоящим я, действуя своей волей и в своем интересе, даю согласие оператору
-              персональных данных «Брикет-Бери» (далее — Оператор) на обработку моих персональных
+              персональных данных {LEGAL_ENTITY_NAME} (далее — Оператор) на обработку моих персональных
               данных, предоставленных через формы сайта.
             </p>
             <p>
@@ -33,6 +34,8 @@ export default function ConsentPage() {
               коммерческого предложения, исполнение договора поставки, а также соблюдение требований
               законодательства Российской Федерации.
             </p>
+            <p>Договор заключается с ИП Бессонов Александр Владимирович.</p>
+            <p>Претензии по качеству товара принимаются по адресу электронной почты {LEGAL_EMAIL}.</p>
             <p>
               Перечень обрабатываемых данных: имя, номер телефона, адрес электронной почты, название
               организации, ИНН, город, комментарий к заявке и иные данные, которые я укажу в формах.
@@ -45,8 +48,8 @@ export default function ConsentPage() {
             <p>
               Срок действия согласия: до достижения целей обработки либо до момента отзыва согласия.
               Согласие может быть отозвано путем направления письма на{' '}
-              <a href="mailto:info@briket-berry.ru" className="text-brand-orange hover:underline">
-                info@briket-berry.ru
+              <a href={`mailto:${LEGAL_EMAIL}`} className="text-brand-orange hover:underline">
+                {LEGAL_EMAIL}
               </a>.
             </p>
             <p className="text-white/50">

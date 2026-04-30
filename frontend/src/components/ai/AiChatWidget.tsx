@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Send } from 'lucide-react'
 import axios from 'axios'
 import FlameLogo from '@/components/ui/Flamelogo'
+import { LEGAL_PHONE } from '@/constants/legal'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -81,7 +82,7 @@ export default function AiChatWidget() {
         ...prev,
         {
           role: 'assistant',
-          content: 'Извините, что-то пошло не так. Позвоните нам: +7 (900) 000-00-00',
+          content: `Извините, что-то пошло не так. Позвоните нам: ${LEGAL_PHONE}`,
           timestamp: new Date(),
         },
       ])

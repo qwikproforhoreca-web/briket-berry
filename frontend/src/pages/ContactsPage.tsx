@@ -1,22 +1,28 @@
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { Mail, MapPin, Phone } from 'lucide-react'
-import { useSettings } from '@/hooks/useSettings'
-
-function toDigits(phone: string) {
-  return phone.replace(/\D/g, '')
-}
+import {
+  LEGAL_ADDRESS,
+  LEGAL_BANK,
+  LEGAL_BIK,
+  LEGAL_EMAIL,
+  LEGAL_ENTITY_NAME,
+  LEGAL_INN,
+  LEGAL_KS,
+  LEGAL_OGRNIP,
+  LEGAL_PHONE,
+  LEGAL_PHONE_DIGITS,
+  LEGAL_RS,
+} from '@/constants/legal'
 
 export default function ContactsPage() {
-  const settings = useSettings()
-
   return (
     <>
       <Helmet>
         <title>Контакты Брикет-Бери | Поставки по России</title>
         <meta
           name="description"
-          content="Контакты Брикет-Бери: телефон, email, адрес и условия поставки угольных брикетов Pini Kay по России."
+          content="Контакты и реквизиты продавца: ИП Бессонов Александр Владимирович. Договор заключается с ИП Бессонов А.В."
         />
         <meta name="robots" content="index,follow" />
         <link rel="canonical" href="https://briket-berry.ru/contacts" />
@@ -28,11 +34,11 @@ export default function ContactsPage() {
           '@type': 'LocalBusiness',
           name: 'Брикет-Бери',
           url: 'https://briket-berry.ru/contacts',
-          telephone: settings.phone,
-          email: settings.email,
+          telephone: LEGAL_PHONE,
+          email: LEGAL_EMAIL,
           address: {
             '@type': 'PostalAddress',
-            streetAddress: settings.address,
+            streetAddress: LEGAL_ADDRESS,
             addressCountry: 'RU',
           },
         })}</script>
@@ -46,20 +52,35 @@ export default function ContactsPage() {
           </p>
 
           <div className="grid md:grid-cols-3 gap-4 mb-8">
-            <a href={`tel:+${toDigits(settings.phone)}`} className="card p-6 hover:border-brand-orange/30 transition-colors">
+            <a href={`tel:+${LEGAL_PHONE_DIGITS}`} className="card p-6 hover:border-brand-orange/30 transition-colors">
               <Phone className="w-5 h-5 text-brand-orange mb-3" />
               <div className="text-white font-semibold mb-1">Телефон</div>
-              <div className="text-white/60 text-sm">{settings.phone}</div>
+              <div className="text-white/60 text-sm">{LEGAL_PHONE}</div>
             </a>
-            <a href={`mailto:${settings.email}`} className="card p-6 hover:border-brand-orange/30 transition-colors">
+            <a href={`mailto:${LEGAL_EMAIL}`} className="card p-6 hover:border-brand-orange/30 transition-colors">
               <Mail className="w-5 h-5 text-brand-orange mb-3" />
               <div className="text-white font-semibold mb-1">Эл. почта</div>
-              <div className="text-white/60 text-sm">{settings.email}</div>
+              <div className="text-white/60 text-sm">{LEGAL_EMAIL}</div>
             </a>
             <div className="card p-6">
               <MapPin className="w-5 h-5 text-brand-orange mb-3" />
               <div className="text-white font-semibold mb-1">Адрес</div>
-              <div className="text-white/60 text-sm">{settings.address}</div>
+              <div className="text-white/60 text-sm">{LEGAL_ADDRESS}</div>
+            </div>
+          </div>
+
+          <div className="card p-6 mb-8">
+            <h2 className="text-white font-semibold mb-3">Реквизиты продавца</h2>
+            <div className="space-y-1.5 text-white/65 text-sm">
+              <p><span className="text-white/40">Наименование:</span> {LEGAL_ENTITY_NAME}</p>
+              <p><span className="text-white/40">ИНН:</span> {LEGAL_INN}</p>
+              <p><span className="text-white/40">ОГРНИП:</span> {LEGAL_OGRNIP}</p>
+              <p><span className="text-white/40">Юридический адрес:</span> {LEGAL_ADDRESS}</p>
+              <p><span className="text-white/40">Фактический адрес:</span> {LEGAL_ADDRESS}</p>
+              <p><span className="text-white/40">Банк:</span> {LEGAL_BANK}</p>
+              <p><span className="text-white/40">БИК:</span> {LEGAL_BIK}</p>
+              <p><span className="text-white/40">К/с:</span> {LEGAL_KS}</p>
+              <p><span className="text-white/40">Р/с:</span> {LEGAL_RS}</p>
             </div>
           </div>
 
@@ -67,6 +88,13 @@ export default function ContactsPage() {
             <h2 className="text-white font-semibold mb-3">Запросить коммерческое предложение</h2>
             <p className="text-white/60 text-sm mb-4">
               Подготовим предложение с ценой, сроками поставки и расчетом объема под ваш формат кухни.
+            </p>
+            <p className="text-white/60 text-sm mb-4">
+              Договор заключается с ИП Бессонов Александр Владимирович. Претензии по качеству товара
+              принимаются по адресу электронной почты{' '}
+              <a href={`mailto:${LEGAL_EMAIL}`} className="text-brand-orange hover:underline">{LEGAL_EMAIL}</a>{' '}
+              и по телефону{' '}
+              <a href={`tel:+${LEGAL_PHONE_DIGITS}`} className="text-brand-orange hover:underline">{LEGAL_PHONE}</a>.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link to="/prices" className="btn-secondary">Смотреть цены</Link>

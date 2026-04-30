@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Phone, Mail, MapPin, MessageCircle, Send } from 'lucide-react'
 import FlameLogo from '@/components/ui/Flamelogo'
 import { useSettings } from '@/hooks/useSettings'
+import { LEGAL_ENTITY_NAME, LEGAL_INN, LEGAL_OGRNIP } from '@/constants/legal'
 
 const footerLinks = {
   products: [
@@ -160,6 +161,9 @@ export default function Footer() {
         <div className="mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-white/30 text-sm">
             © 2026 Брикет-Бери. Все права защищены.
+          </p>
+          <p className="text-white/30 text-xs text-center">
+            {LEGAL_ENTITY_NAME} · ИНН {LEGAL_INN} · ОГРНИП {LEGAL_OGRNIP}
           </p>
           <div className="flex gap-6">
             <Link to="/privacy" className="text-white/30 hover:text-white/60 text-xs transition-colors">

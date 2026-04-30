@@ -1,4 +1,16 @@
 import { Helmet } from 'react-helmet-async'
+import {
+  LEGAL_ADDRESS,
+  LEGAL_BANK,
+  LEGAL_BIK,
+  LEGAL_EMAIL,
+  LEGAL_ENTITY_NAME,
+  LEGAL_INN,
+  LEGAL_KS,
+  LEGAL_OGRNIP,
+  LEGAL_PHONE,
+  LEGAL_RS,
+} from '@/constants/legal'
 
 export default function TermsPage() {
   return (
@@ -25,13 +37,16 @@ export default function TermsPage() {
               <h2 className="text-xl font-semibold text-white mb-3">1. Общие положения</h2>
               <p className="mb-3">
                 Настоящее Пользовательское соглашение (далее — «Соглашение») регулирует отношения
-                между компанией «Брикет-Бери» (далее — «Продавец») и пользователем сайта
+                между {LEGAL_ENTITY_NAME} (далее — «Продавец») и пользователем сайта
                 briket-berry.ru (далее — «Покупатель»), возникающие в связи с использованием
                 интернет-магазина и приобретением товаров.
               </p>
               <p>
                 Оформляя заказ на Сайте, Покупатель подтверждает своё согласие с условиями
                 настоящего Соглашения в полном объёме.
+              </p>
+              <p className="mt-3">
+                Договор заключается с ИП Бессонов Александр Владимирович.
               </p>
             </section>
 
@@ -110,10 +125,13 @@ export default function TermsPage() {
                 Возврат товара ненадлежащего качества осуществляется в соответствии с Законом РФ
                 «О защите прав потребителей» от 07.02.1992 № 2300-1. Для возврата необходимо
                 обратиться по адресу{' '}
-                <a href="mailto:info@briket-berry.ru" className="text-brand-orange hover:underline">
-                  info@briket-berry.ru
+                <a href={`mailto:${LEGAL_EMAIL}`} className="text-brand-orange hover:underline">
+                  {LEGAL_EMAIL}
                 </a>{' '}
                 с описанием проблемы и фотографиями товара.
+              </p>
+              <p className="mt-3">
+                Претензии по качеству товара принимаются по адресу электронной почты {LEGAL_EMAIL}.
               </p>
               <p>
                 Расходы на обратную доставку товара ненадлежащего качества несёт Продавец.
@@ -167,11 +185,24 @@ export default function TermsPage() {
               <h2 className="text-xl font-semibold text-white mb-3">12. Контактная информация</h2>
               <p>
                 По всем вопросам, связанным с использованием Сайта и исполнением заказов,
-                обращайтесь по адресу электронной почты:{' '}
-                <a href="mailto:info@briket-berry.ru" className="text-brand-orange hover:underline">
-                  info@briket-berry.ru
-                </a>.
+                обращайтесь по адресу электронной почты{' '}
+                <a href={`mailto:${LEGAL_EMAIL}`} className="text-brand-orange hover:underline">
+                  {LEGAL_EMAIL}
+                </a>{' '}
+                или по телефону {LEGAL_PHONE}.
               </p>
+            </section>
+            <section>
+              <h2 className="text-xl font-semibold text-white mb-3">13. Реквизиты продавца</h2>
+              <p>{LEGAL_ENTITY_NAME}</p>
+              <p>ИНН: {LEGAL_INN}</p>
+              <p>ОГРНИП: {LEGAL_OGRNIP}</p>
+              <p>Юридический адрес: {LEGAL_ADDRESS}</p>
+              <p>Фактический адрес: {LEGAL_ADDRESS}</p>
+              <p>Банк: {LEGAL_BANK}</p>
+              <p>БИК: {LEGAL_BIK}</p>
+              <p>К/с: {LEGAL_KS}</p>
+              <p>Р/с: {LEGAL_RS}</p>
             </section>
           </div>
         </div>

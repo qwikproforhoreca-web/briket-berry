@@ -9,6 +9,7 @@ import { Check, CreditCard, FileText, Phone, Building2, User, MessageSquare, Che
 import clsx from 'clsx'
 import axios from 'axios'
 import { useQuery } from '@tanstack/react-query'
+import { LEGAL_EMAIL, LEGAL_ENTITY_NAME, LEGAL_PHONE, LEGAL_PHONE_DIGITS } from '@/constants/legal'
 
 const orderSchema = z.object({
   paymentMethod: z.enum(['online', 'invoice']),
@@ -415,7 +416,7 @@ export default function OrderPage() {
                             <label className="text-white/60 text-sm mb-1.5 block flex items-center gap-1.5">
                               <Phone className="w-3.5 h-3.5 text-brand-orange" /> Телефон *
                             </label>
-                            <input {...register('phone')} placeholder="+7 (900) 000-00-00" className="input-field" />
+                            <input {...register('phone')} placeholder="+7 (906) 490-22-48" className="input-field" />
                             {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone.message}</p>}
                           </div>
                         </div>
@@ -480,12 +481,20 @@ export default function OrderPage() {
                         )}
 
                         <div className="p-3 rounded-xl border border-white/10 bg-[#111111] text-white/55 text-xs leading-relaxed">
-                          Оператор персональных данных: «Брикет-Бери», email:{' '}
-                          <a href="mailto:info@briket-berry.ru" className="text-brand-orange hover:underline">
-                            info@briket-berry.ru
+                          Оператор персональных данных: {LEGAL_ENTITY_NAME}, email:{' '}
+                          <a href={`mailto:${LEGAL_EMAIL}`} className="text-brand-orange hover:underline">
+                            {LEGAL_EMAIL}
                           </a>
                           . Цель сбора данных: обработка и подтверждение заявки, связь с клиентом,
-                          подготовка и исполнение договора поставки.
+                          подготовка и исполнение договора поставки. Договор заключается с {LEGAL_ENTITY_NAME}.
+                          Претензии по качеству принимаются по email{' '}
+                          <a href={`mailto:${LEGAL_EMAIL}`} className="text-brand-orange hover:underline">
+                            {LEGAL_EMAIL}
+                          </a>{' '}
+                          и телефону{' '}
+                          <a href={`tel:+${LEGAL_PHONE_DIGITS}`} className="text-brand-orange hover:underline">
+                            {LEGAL_PHONE}
+                          </a>.
                         </div>
 
                         {/* Personal data consent */}

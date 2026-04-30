@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
+import { LEGAL_ADDRESS, LEGAL_EMAIL, LEGAL_PHONE, LEGAL_PHONE_DIGITS } from '@/constants/legal'
 
 interface SiteSettings {
   phone: string
@@ -11,12 +12,12 @@ interface SiteSettings {
 }
 
 const DEFAULTS: SiteSettings = {
-  phone: '+7 (900) 000-00-00',
-  whatsapp: '+79000000000',
+  phone: LEGAL_PHONE,
+  whatsapp: `+${LEGAL_PHONE_DIGITS}`,
   telegram: '@briket_beri',
-  max: '+79000000000',
-  email: 'info@briket-berry.ru',
-  address: 'Москва · Пн–Пт 10:00 – 18:00',
+  max: `+${LEGAL_PHONE_DIGITS}`,
+  email: LEGAL_EMAIL,
+  address: LEGAL_ADDRESS,
 }
 
 export function useSettings() {
@@ -31,11 +32,11 @@ export function useSettings() {
     ?.reduce<Record<string, string>>((acc, s) => { acc[s.key] = s.value; return acc }, {}) ?? {}
 
   return {
-    phone: map['site.phone'] || DEFAULTS.phone,
+    phone: DEFAULTS.phone,
     whatsapp: map['site.whatsapp'] || DEFAULTS.whatsapp,
     telegram: map['site.telegram'] || DEFAULTS.telegram,
     max: map['site.max'] || DEFAULTS.max,
-    email: map['site.email'] || DEFAULTS.email,
-    address: map['site.address'] || DEFAULTS.address,
+    email: DEFAULTS.email,
+    address: DEFAULTS.address,
   }
 }

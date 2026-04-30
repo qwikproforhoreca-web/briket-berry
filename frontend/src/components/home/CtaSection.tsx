@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, Phone } from 'lucide-react'
+import { LEGAL_PHONE_DIGITS } from '@/constants/legal'
 
 export default function CtaSection() {
   return (
@@ -73,7 +74,7 @@ export default function CtaSection() {
               <ArrowRight className="w-5 h-5" />
             </Link>
             <a
-              href="tel:+79000000000"
+              href={`tel:+${LEGAL_PHONE_DIGITS}`}
               className="btn-secondary text-lg"
             >
               <Phone className="w-5 h-5" />

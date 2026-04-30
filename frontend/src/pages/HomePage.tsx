@@ -8,6 +8,7 @@ import ComparisonPreview from '@/components/home/ComparisonPreview'
 import HowToStart from '@/components/home/HowToStart'
 import ReviewsPreview from '@/components/home/ReviewsPreview'
 import CtaSection from '@/components/home/CtaSection'
+import { LEGAL_PHONE_DIGITS } from '@/constants/legal'
 
 export default function HomePage() {
   return (
@@ -47,12 +48,12 @@ export default function HomePage() {
               logo: 'https://briket-berry.ru/logo.png',
               areaServed: 'RU',
               sameAs: [
-                'https://wa.me/79000000000',
+                `https://wa.me/${LEGAL_PHONE_DIGITS}`,
                 'https://t.me/briket_berry',
               ],
               contactPoint: {
                 '@type': 'ContactPoint',
-                telephone: '+7-900-000-00-00',
+                telephone: '+7-906-490-22-48',
                 contactType: 'sales',
                 availableLanguage: ['ru'],
               },
@@ -65,7 +66,7 @@ export default function HomePage() {
               image: 'https://briket-berry.ru/og-image.jpg',
               priceRange: '₽₽',
               areaServed: ['Москва', 'Санкт-Петербург', 'Россия'],
-              telephone: '+7-900-000-00-00',
+              telephone: '+7-906-490-22-48',
               address: {
                 '@type': 'PostalAddress',
                 addressCountry: 'RU',

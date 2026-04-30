@@ -1,4 +1,12 @@
 import { Helmet } from 'react-helmet-async'
+import {
+  LEGAL_ADDRESS,
+  LEGAL_EMAIL,
+  LEGAL_ENTITY_NAME,
+  LEGAL_INN,
+  LEGAL_OGRNIP,
+  LEGAL_PHONE,
+} from '@/constants/legal'
 
 export default function PrivacyPage() {
   return (
@@ -26,16 +34,17 @@ export default function PrivacyPage() {
               <p className="mb-3">
                 Настоящая Политика конфиденциальности (далее — «Политика») определяет порядок обработки
                 и защиты персональных данных пользователей сайта briket-berry.ru (далее — «Сайт»),
-                принадлежащего компании «Брикет-Бери» (далее — «Оператор»).
+                принадлежащего {LEGAL_ENTITY_NAME} (далее — «Оператор»).
               </p>
               <p>
                 Используя Сайт и предоставляя свои персональные данные, вы соглашаетесь с условиями
                 данной Политики. Если вы не согласны с условиями, пожалуйста, не используйте Сайт.
               </p>
               <p className="mt-3">
-                Оператор персональных данных: «Брикет-Бери», контактный email:{' '}
-                <a href="mailto:info@briket-berry.ru" className="text-brand-orange hover:underline">
-                  info@briket-berry.ru
+                Оператор персональных данных: {LEGAL_ENTITY_NAME}, ИНН {LEGAL_INN}, ОГРНИП {LEGAL_OGRNIP},
+                адрес: {LEGAL_ADDRESS}, контактный email:{' '}
+                <a href={`mailto:${LEGAL_EMAIL}`} className="text-brand-orange hover:underline">
+                  {LEGAL_EMAIL}
                 </a>.
               </p>
             </section>
@@ -71,6 +80,7 @@ export default function PrivacyPage() {
                 Обработка персональных данных осуществляется на основании Федерального закона
                 от 27.07.2006 № 152-ФЗ «О персональных данных», а также на основании согласия
                 субъекта персональных данных и в целях исполнения договора купли-продажи.
+                Договор заключается с ИП Бессонов Александр Владимирович.
               </p>
             </section>
 
@@ -140,8 +150,8 @@ export default function PrivacyPage() {
               </ul>
               <p className="mt-3">
                 Для реализации указанных прав направьте запрос на адрес{' '}
-                <a href="mailto:info@briket-berry.ru" className="text-brand-orange hover:underline">
-                  info@briket-berry.ru
+                <a href={`mailto:${LEGAL_EMAIL}`} className="text-brand-orange hover:underline">
+                  {LEGAL_EMAIL}
                 </a>.
               </p>
             </section>
@@ -168,10 +178,12 @@ export default function PrivacyPage() {
               <h2 className="text-xl font-semibold text-white mb-3">12. Контактная информация</h2>
               <p>
                 По всем вопросам, связанным с обработкой персональных данных, вы можете обратиться
-                по адресу электронной почты:{' '}
-                <a href="mailto:info@briket-berry.ru" className="text-brand-orange hover:underline">
-                  info@briket-berry.ru
-                </a>.
+                по адресу электронной почты{' '}
+                <a href={`mailto:${LEGAL_EMAIL}`} className="text-brand-orange hover:underline">
+                  {LEGAL_EMAIL}
+                </a>{' '}
+                и по телефону {LEGAL_PHONE}. Претензии по качеству товара принимаются по адресу
+                электронной почты {LEGAL_EMAIL}.
               </p>
             </section>
           </div>

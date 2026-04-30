@@ -2,6 +2,7 @@ import { useLocation, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { CheckCircle, Phone, Home, ArrowRight } from 'lucide-react'
 import { Helmet } from 'react-helmet-async'
+import { LEGAL_PHONE_DIGITS } from '@/constants/legal'
 
 const EMBERS = Array.from({ length: 16 }, () => ({
   left: `${Math.random() * 100}%`,
@@ -84,7 +85,7 @@ export default function OrderSuccessPage() {
             transition={{ delay: 0.7 }}
             className="space-y-3"
           >
-            <a href="tel:+79000000000" className="flex items-center justify-center gap-2 btn-secondary w-full">
+            <a href={`tel:+${LEGAL_PHONE_DIGITS}`} className="flex items-center justify-center gap-2 btn-secondary w-full">
               <Phone className="w-4 h-4" />
               Позвонить нам
             </a>
