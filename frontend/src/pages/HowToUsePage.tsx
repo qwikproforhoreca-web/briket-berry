@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
 import { Play, Clock, Thermometer, Package, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import clsx from 'clsx'
+import { siteUrl } from '@/constants/site'
 
 const rozhigSteps = [
   {
@@ -88,10 +89,10 @@ export default function HowToUsePage() {
           content="Подробная инструкция по розжигу брикетов Pini Kay. Как правильно разжечь хоспер за 30 минут, поддерживать температуру 900°C, хранить брикеты"
         />
         <meta name="robots" content="index,follow" />
-        <link rel="canonical" href="https://briket-berry.ru/how-to-use" />
+        <link rel="canonical" href={siteUrl('/how-to-use')} />
         <meta property="og:title" content="Как правильно использовать брикеты Pini Kay" />
         <meta property="og:description" content="Пошаговая инструкция по розжигу и работе с брикетами для хосперов и мангалов." />
-        <meta property="og:url" content="https://briket-berry.ru/how-to-use" />
+        <meta property="og:url" content={siteUrl('/how-to-use')} />
         <script type="application/ld+json">{JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'FAQPage',

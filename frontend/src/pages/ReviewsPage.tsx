@@ -2,6 +2,7 @@ import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
 import { Star, BadgeCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { siteUrl } from '@/constants/site'
 
 const reviews = [
   {
@@ -90,10 +91,10 @@ export default function ReviewsPage() {
           content="Реальные отзывы шеф-поваров и владельцев ресторанов о брикетах Pini Kay. 500+ довольных клиентов"
         />
         <meta name="robots" content="index,follow" />
-        <link rel="canonical" href="https://briket-berry.ru/reviews" />
+        <link rel="canonical" href={siteUrl('/reviews')} />
         <meta property="og:title" content="Отзывы о брикетах Pini Kay от ресторанов" />
         <meta property="og:description" content="Реальные кейсы и отзывы заведений по работе на брикетах Pini Kay." />
-        <meta property="og:url" content="https://briket-berry.ru/reviews" />
+        <meta property="og:url" content={siteUrl('/reviews')} />
         <script type="application/ld+json">{JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'Product',

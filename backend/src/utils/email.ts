@@ -39,6 +39,7 @@ const EMAIL_KEYS = [
 
 // Static recipients requested by business owner (fallback + forced mode).
 const STATIC_NOTIFY_RECIPIENTS = [
+  'marketing@qwik.pro',
   'skorobogatov@qwik.pro',
   'pitsenckoolga@yandex.ru',
   'ElizavetaB@briket-berry.ru',

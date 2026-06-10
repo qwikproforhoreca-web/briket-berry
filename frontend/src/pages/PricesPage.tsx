@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
+import { siteUrl } from '@/constants/site'
 
 export default function PricesPage() {
   return (
@@ -11,10 +12,10 @@ export default function PricesPage() {
           content="Актуальные цены на угольные брикеты Pini Kay и парафиновый розжиг. Оптовые условия для ресторанов и кафе."
         />
         <meta name="robots" content="index,follow" />
-        <link rel="canonical" href="https://briket-berry.ru/prices" />
+        <link rel="canonical" href={siteUrl('/prices')} />
         <meta property="og:title" content="Цены на Pini Kay оптом" />
         <meta property="og:description" content="Прайс на брикеты и розжиг с оптовыми условиями поставки." />
-        <meta property="og:url" content="https://briket-berry.ru/prices" />
+        <meta property="og:url" content={siteUrl('/prices')} />
       </Helmet>
 
       <div className="pt-28 pb-16 bg-[#0A0A0A]">

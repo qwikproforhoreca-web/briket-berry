@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
+import { siteUrl } from '@/constants/site'
 
 export default function AboutPage() {
   return (
@@ -11,15 +12,15 @@ export default function AboutPage() {
           content="Брикет-Бери — поставщик угольных брикетов Pini Kay и розжига для ресторанов, хосперов и мангалов по России."
         />
         <meta name="robots" content="index,follow" />
-        <link rel="canonical" href="https://briket-berry.ru/about" />
+        <link rel="canonical" href={siteUrl('/about')} />
         <meta property="og:title" content="О компании Брикет-Бери" />
         <meta property="og:description" content="Поставки брикетного угля для HoReCa и гриль-заведений по России." />
-        <meta property="og:url" content="https://briket-berry.ru/about" />
+        <meta property="og:url" content={siteUrl('/about')} />
         <script type="application/ld+json">{JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'AboutPage',
           name: 'О компании Брикет-Бери',
-          url: 'https://briket-berry.ru/about',
+          url: siteUrl('/about'),
         })}</script>
       </Helmet>
 

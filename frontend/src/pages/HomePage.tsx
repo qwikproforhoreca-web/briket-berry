@@ -9,6 +9,7 @@ import HowToStart from '@/components/home/HowToStart'
 import ReviewsPreview from '@/components/home/ReviewsPreview'
 import CtaSection from '@/components/home/CtaSection'
 import { LEGAL_PHONE_DIGITS } from '@/constants/legal'
+import { SITE_URL, siteUrl } from '@/constants/site'
 
 export default function HomePage() {
   return (
@@ -21,20 +22,20 @@ export default function HomePage() {
         />
         <meta name="keywords" content="угольные брикеты, pini kay, уголь для ресторана, уголь для хоспера, брикеты для мангала оптом" />
         <meta name="robots" content="index,follow" />
-        <link rel="canonical" href="https://briket-berry.ru/" />
+        <link rel="canonical" href={siteUrl()} />
 
         {/* Open Graph */}
         <meta property="og:title" content="Угольные брикеты Pini Kay — для профессиональной кухни" />
         <meta property="og:description" content="До 8 часов горения, без дыма и запаха. Опт от 10 коробок — 835 ₽" />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://briket-berry.ru" />
-        <meta property="og:image" content="https://briket-berry.ru/og-image.jpg" />
+        <meta property="og:url" content={SITE_URL} />
+        <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
         <meta property="og:image:alt" content="Угольные брикеты Pini Kay оптом для ресторанов и хосперов" />
         <meta property="og:locale" content="ru_RU" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Угольные брикеты Pini Kay — для профессиональной кухни" />
         <meta name="twitter:description" content="До 8 часов горения, без дыма и запаха. Опт от 10 коробок — 835 ₽" />
-        <meta name="twitter:image" content="https://briket-berry.ru/og-image.jpg" />
+        <meta name="twitter:image" content={`${SITE_URL}/og-image.jpg`} />
 
         {/* Schema.org */}
         <script type="application/ld+json">{JSON.stringify({
@@ -42,10 +43,10 @@ export default function HomePage() {
           '@graph': [
             {
               '@type': 'Organization',
-              '@id': 'https://briket-berry.ru/#organization',
+              '@id': `${SITE_URL}/#organization`,
               name: 'Брикет-Бери',
-              url: 'https://briket-berry.ru',
-              logo: 'https://briket-berry.ru/logo.png',
+              url: SITE_URL,
+              logo: `${SITE_URL}/logo.png`,
               areaServed: 'RU',
               sameAs: [
                 `https://wa.me/${LEGAL_PHONE_DIGITS}`,
@@ -60,10 +61,10 @@ export default function HomePage() {
             },
             {
               '@type': 'LocalBusiness',
-              '@id': 'https://briket-berry.ru/#localbusiness',
+              '@id': `${SITE_URL}/#localbusiness`,
               name: 'Брикет-Бери',
-              url: 'https://briket-berry.ru',
-              image: 'https://briket-berry.ru/og-image.jpg',
+              url: SITE_URL,
+              image: `${SITE_URL}/og-image.jpg`,
               priceRange: '₽₽',
               areaServed: ['Москва', 'Санкт-Петербург', 'Россия'],
               telephone: '+7-906-490-22-48',
@@ -74,8 +75,8 @@ export default function HomePage() {
             },
             {
               '@type': 'WebSite',
-              '@id': 'https://briket-berry.ru/#website',
-              url: 'https://briket-berry.ru',
+              '@id': `${SITE_URL}/#website`,
+              url: SITE_URL,
               name: 'Брикет-Бери',
               inLanguage: 'ru-RU',
             },

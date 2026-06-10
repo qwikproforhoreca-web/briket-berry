@@ -263,7 +263,7 @@ export default function AdminSettingsPage() {
               {[
                 { key: 'payment.shopId', label: 'Shop ID', placeholder: '123456' },
                 { key: 'payment.secretKey', label: 'Secret Key', placeholder: 'live_...', secret: true },
-                { key: 'payment.returnUrl', label: 'Return URL', placeholder: 'https://briket-berry.ru/order/success' },
+                { key: 'payment.returnUrl', label: 'Return URL', placeholder: 'https://www.briket-berry.ru/order/success' },
               ].map((field) => (
                 <SettingField
                   key={field.key}

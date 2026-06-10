@@ -10,6 +10,7 @@ import clsx from 'clsx'
 import axios from 'axios'
 import { useQuery } from '@tanstack/react-query'
 import { LEGAL_EMAIL, LEGAL_ENTITY_NAME, LEGAL_PHONE, LEGAL_PHONE_DIGITS } from '@/constants/legal'
+import { siteUrl } from '@/constants/site'
 
 const orderSchema = z.object({
   paymentMethod: z.enum(['online', 'invoice']),
@@ -176,10 +177,10 @@ export default function OrderPage() {
         <title>Оставить заявку на угольные брикеты | Брикет-Бери</title>
         <meta name="description" content="Оформите заявку на угольные брикеты Pini Kay 10 кг и парафиновый розжиг 8 кубиков. Онлайн-оплата или счёт для юрлиц." />
         <meta name="robots" content="index,follow" />
-        <link rel="canonical" href="https://briket-berry.ru/order" />
+        <link rel="canonical" href={siteUrl('/order')} />
         <meta property="og:title" content="Оставить заявку на брикеты Pini Kay" />
         <meta property="og:description" content="Заявка на оптовую поставку угольных брикетов и розжига по России." />
-        <meta property="og:url" content="https://briket-berry.ru/order" />
+        <meta property="og:url" content={siteUrl('/order')} />
       </Helmet>
 
       <div className="pt-28 pb-16 min-h-screen bg-[#0A0A0A]">

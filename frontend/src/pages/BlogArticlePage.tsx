@@ -1,6 +1,7 @@
 import { Helmet } from 'react-helmet-async'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { blogPosts, getBlogPostBySlug } from '@/content/blogPosts'
+import { SITE_URL, siteUrl } from '@/constants/site'
 
 export default function BlogArticlePage() {
   const { slug } = useParams()
@@ -8,7 +9,7 @@ export default function BlogArticlePage() {
 
   if (!post) return <Navigate to="/blog" replace />
 
-  const postUrl = `https://briket-berry.ru/blog/${post.slug}`
+  const postUrl = siteUrl(`/blog/${post.slug}`)
 
   return (
     <>
@@ -39,7 +40,7 @@ export default function BlogArticlePage() {
             name: 'Брикет-Бери',
             logo: {
               '@type': 'ImageObject',
-              url: 'https://briket-berry.ru/logo.png',
+              url: `${SITE_URL}/logo.png`,
             },
           },
         })}</script>
@@ -51,13 +52,13 @@ export default function BlogArticlePage() {
               '@type': 'ListItem',
               position: 1,
               name: 'Главная',
-              item: 'https://briket-berry.ru/',
+              item: siteUrl(),
             },
             {
               '@type': 'ListItem',
               position: 2,
               name: 'Блог',
-              item: 'https://briket-berry.ru/blog',
+              item: siteUrl('/blog'),
             },
             {
               '@type': 'ListItem',

@@ -16,6 +16,7 @@ return [
     'from_email' => 'skorobogatov@qwik.pro',
 
     'recipients' => [
+        'marketing@qwik.pro',
         'skorobogatov@qwik.pro',
         'pitsenckoolga@yandex.ru',
         'ElizavetaB@briket-berry.ru',

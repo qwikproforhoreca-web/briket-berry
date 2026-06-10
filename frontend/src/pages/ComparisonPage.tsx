@@ -2,6 +2,7 @@ import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
 import { Check, X, TrendingDown, Link as LinkIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { siteUrl } from '@/constants/site'
 
 const comparisonRows = [
   { param: 'Время горения', piniKay: 'До 8 часов', regular: '1-2 часа', wood: '2-3 часа', piniWins: true },
@@ -33,10 +34,10 @@ export default function ComparisonPage() {
         <title>Pini Kay vs обычный уголь — сравнение | Брикет-Бери</title>
         <meta name="description" content="Детальное сравнение угольных брикетов Pini Kay с обычным берёзовым углём и дровами. Экономический расчёт для ресторанного бизнеса." />
         <meta name="robots" content="index,follow" />
-        <link rel="canonical" href="https://briket-berry.ru/comparison" />
+        <link rel="canonical" href={siteUrl('/comparison')} />
         <meta property="og:title" content="Сравнение Pini Kay и обычного угля" />
         <meta property="og:description" content="Сравнение по времени горения, температуре, расходу и стоимости для хосперов и мангалов." />
-        <meta property="og:url" content="https://briket-berry.ru/comparison" />
+        <meta property="og:url" content={siteUrl('/comparison')} />
       </Helmet>
 
       {/* Hero */}

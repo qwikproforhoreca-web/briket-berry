@@ -2,6 +2,7 @@ import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
 import { Flame, Clock, Thermometer, Package, AlertTriangle, CheckCircle, Zap, Home, ChefHat, Leaf, Star } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { siteUrl } from '@/constants/site'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -79,10 +80,10 @@ export default function FirestartersPage() {
         />
         <meta name="keywords" content="парафиновый розжиг, розжиг для мангала, розжиг для хоспера, розжиг для камина, кубики розжига, экологичный розжиг, оптовый розжиг ресторан" />
         <meta name="robots" content="index,follow" />
-        <link rel="canonical" href="https://briket-berry.ru/firestarters" />
+        <link rel="canonical" href={siteUrl('/firestarters')} />
         <meta property="og:title" content="Парафиновый розжиг для хоспера и мангала" />
         <meta property="og:description" content="Розжиг Pini Kay для ресторанов и кафе: быстро, без запаха, без химии." />
-        <meta property="og:url" content="https://briket-berry.ru/firestarters" />
+        <meta property="og:url" content={siteUrl('/firestarters')} />
       </Helmet>
 
       {/* Hero */}

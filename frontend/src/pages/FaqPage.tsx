@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
+import { siteUrl } from '@/constants/site'
 
 const faqItems = [
   {
@@ -30,10 +31,10 @@ export default function FaqPage() {
           content="Ответы на частые вопросы о брикетах Pini Kay: время горения, применение в хосперах, опт, доставка и хранение."
         />
         <meta name="robots" content="index,follow" />
-        <link rel="canonical" href="https://briket-berry.ru/faq" />
+        <link rel="canonical" href={siteUrl('/faq')} />
         <meta property="og:title" content="Частые вопросы по брикетам Pini Kay" />
         <meta property="og:description" content="Частые вопросы и ответы по использованию и закупке брикетного угля." />
-        <meta property="og:url" content="https://briket-berry.ru/faq" />
+        <meta property="og:url" content={siteUrl('/faq')} />
         <script type="application/ld+json">{JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'FAQPage',

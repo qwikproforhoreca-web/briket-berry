@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Check, ArrowRight, Calculator, Minus, Plus } from 'lucide-react'
+import { siteUrl } from '@/constants/site'
 import clsx from 'clsx'
 import axios from 'axios'
 import { useQuery } from '@tanstack/react-query'
@@ -345,10 +346,10 @@ export default function ProductsPage() {
           content="Угольные брикеты Pini Kay для ресторанов и кафе. 10 кг — 890 ₽. Опт 835 ₽/шт от 20 шт. Парафиновый розжиг 8 кубиков — 120 ₽, опт 100 ₽/шт от 50 шт."
         />
         <meta name="robots" content="index,follow" />
-        <link rel="canonical" href="https://briket-berry.ru/products" />
+        <link rel="canonical" href={siteUrl('/products')} />
         <meta property="og:title" content="Каталог Pini Kay: брикеты и розжиг оптом" />
         <meta property="og:description" content="Каталог угольных брикетов и розжига Pini Kay для мангалов и хосперов." />
-        <meta property="og:url" content="https://briket-berry.ru/products" />
+        <meta property="og:url" content={siteUrl('/products')} />
         <meta property="og:type" content="product.group" />
       </Helmet>
 

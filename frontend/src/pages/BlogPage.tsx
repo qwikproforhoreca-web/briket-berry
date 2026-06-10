@@ -1,6 +1,7 @@
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { blogPosts } from '@/content/blogPosts'
+import { siteUrl } from '@/constants/site'
 
 export default function BlogPage() {
   return (
@@ -12,15 +13,15 @@ export default function BlogPage() {
           content="Экспертный блог Брикет-Бери: выбор брикетного угля, работа с хоспером, снижение расхода и дымности на кухне."
         />
         <meta name="robots" content="index,follow" />
-        <link rel="canonical" href="https://briket-berry.ru/blog" />
+        <link rel="canonical" href={siteUrl('/blog')} />
         <meta property="og:title" content="Блог Брикет-Бери" />
         <meta property="og:description" content="Статьи по выбору и применению брикетного угля для HoReCa." />
-        <meta property="og:url" content="https://briket-berry.ru/blog" />
+        <meta property="og:url" content={siteUrl('/blog')} />
         <script type="application/ld+json">{JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'Blog',
           name: 'Блог Брикет-Бери',
-          url: 'https://briket-berry.ru/blog',
+          url: siteUrl('/blog'),
           inLanguage: 'ru-RU',
         })}</script>
       </Helmet>

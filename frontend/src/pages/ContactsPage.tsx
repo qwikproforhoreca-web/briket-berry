@@ -14,6 +14,7 @@ import {
   LEGAL_PHONE_DIGITS,
   LEGAL_RS,
 } from '@/constants/legal'
+import { siteUrl } from '@/constants/site'
 
 export default function ContactsPage() {
   return (
@@ -25,15 +26,15 @@ export default function ContactsPage() {
           content="Контакты и реквизиты продавца: ИП Бессонов Александр Владимирович. Договор заключается с ИП Бессонов А.В."
         />
         <meta name="robots" content="index,follow" />
-        <link rel="canonical" href="https://briket-berry.ru/contacts" />
+        <link rel="canonical" href={siteUrl('/contacts')} />
         <meta property="og:title" content="Контакты Брикет-Бери" />
         <meta property="og:description" content="Связаться с нами по поставкам брикетов и розжига для HoReCa." />
-        <meta property="og:url" content="https://briket-berry.ru/contacts" />
+        <meta property="og:url" content={siteUrl('/contacts')} />
         <script type="application/ld+json">{JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'LocalBusiness',
           name: 'Брикет-Бери',
-          url: 'https://briket-berry.ru/contacts',
+          url: siteUrl('/contacts'),
           telephone: LEGAL_PHONE,
           email: LEGAL_EMAIL,
           address: {

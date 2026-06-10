@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async'
 import { LEGAL_EMAIL, LEGAL_ENTITY_NAME } from '@/constants/legal'
+import { siteUrl } from '@/constants/site'
 
 export default function ConsentPage() {
   return (
@@ -11,7 +12,7 @@ export default function ConsentPage() {
           content="Форма и условия согласия на обработку персональных данных пользователей сайта Брикет-Бери."
         />
         <meta name="robots" content="index,follow" />
-        <link rel="canonical" href="https://www.briket-berry.ru/consent" />
+        <link rel="canonical" href={siteUrl('/consent')} />
       </Helmet>
 
       <div className="pt-28 pb-20 bg-[#0A0A0A] min-h-screen">

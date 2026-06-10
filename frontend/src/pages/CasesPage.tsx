@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
+import { siteUrl } from '@/constants/site'
 
 const cases = [
   {
@@ -29,10 +30,10 @@ export default function CasesPage() {
           content="Кейсы ресторанов и кафе: снижение расхода, меньше дыма, стабильная температура при работе на брикетах Pini Kay."
         />
         <meta name="robots" content="index,follow" />
-        <link rel="canonical" href="https://briket-berry.ru/cases" />
+        <link rel="canonical" href={siteUrl('/cases')} />
         <meta property="og:title" content="Кейсы клиентов Брикет-Бери" />
         <meta property="og:description" content="Реальные результаты заведений после перехода на брикетный уголь Pini Kay." />
-        <meta property="og:url" content="https://briket-berry.ru/cases" />
+        <meta property="og:url" content={siteUrl('/cases')} />
       </Helmet>
 
       <div className="pt-28 pb-16 bg-[#0A0A0A]">
