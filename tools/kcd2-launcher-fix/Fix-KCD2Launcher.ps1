@@ -233,6 +233,38 @@ function Clear-SteamLaunchOptionsHint {
     Write-Warn "Проверьте параметры запуска Steam: Свойства игры -> Общие -> Параметры запуска (очистите поле)."
 }
 
+function Start-SteamLauncher {
+    $steamExe = "${env:ProgramFiles(x86)}\Steam\steam.exe"
+    if (-not (Test-Path $steamExe)) {
+        $steamExe = "$env:ProgramFiles\Steam\steam.exe"
+    }
+    if (Test-Path $steamExe) {
+        Write-Step "Запуск Steam"
+        Start-Process -FilePath $steamExe
+        Start-Sleep -Seconds 5
+        Start-Process $steamExe -ArgumentList 'steam://rungameid/1771300'
+        Write-Ok "Steam запущен, отправлена команда на старт KCD2 (AppID 1771300)"
+        return $true
+    }
+    return $false
+}
+
+function Start-EpicLauncher {
+    $epicExe = "$env:ProgramFiles(x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe"
+    if (-not (Test-Path $epicExe)) {
+        $epicExe = "$env:ProgramFiles\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe"
+    }
+    if (Test-Path $epicExe) {
+        Write-Step "Запуск Epic Games Launcher"
+        Start-Process -FilePath $epicExe -ArgumentList '-launch -silent'
+        Start-Sleep -Seconds 8
+        Start-Process "com.epicgames.launcher://apps/KingdomComeDeliverance2?action=launch&silent=true"
+        Write-Ok "Epic Games Launcher запущен, отправлена команда на старт KCD2"
+        return $true
+    }
+    return $false
+}
+
 function Start-Game([string]$ExePath) {
     if (-not (Test-Path $ExePath)) {
         Write-Err "Не удалось запустить: $ExePath"
@@ -241,6 +273,33 @@ function Start-Game([string]$ExePath) {
     Write-Step "Запуск игры"
     Start-Process -FilePath $ExePath -WorkingDirectory (Split-Path $ExePath -Parent)
     Write-Ok "Игра запущена"
+}
+
+function Start-AllLaunchers {
+    param(
+        $LaunchTarget,
+        [string]$PreferredPlatform = 'Auto'
+    )
+
+    $steamStarted = $false
+    $epicStarted = $false
+
+    if ($PreferredPlatform -eq 'Steam' -or $PreferredPlatform -eq 'Auto') {
+        $steamStarted = Start-SteamLauncher
+    }
+    if ($PreferredPlatform -eq 'Epic' -or ($PreferredPlatform -eq 'Auto' -and -not $steamStarted)) {
+        $epicStarted = Start-EpicLauncher
+    }
+
+    if ($LaunchTarget -and $LaunchTarget.ExePath) {
+        Start-Sleep -Seconds 3
+        Start-Game -ExePath $LaunchTarget.ExePath
+        return
+    }
+
+    if (-not $steamStarted -and -not $epicStarted) {
+        Write-Err "Не найден Steam или Epic Games Launcher. Установите лаунчер и игру."
+    }
 }
 
 # --- main ---
@@ -310,8 +369,11 @@ Write-Host "  3. Дождитесь окончания проверки файл
 Write-Host "  4. Запустите игру. При первом запуске используйте оконный режим и средние настройки."
 Write-Host ""
 
-if ($LaunchAfterFix -and $launchTarget -and $launchTarget.ExePath) {
-    Start-Game -ExePath $launchTarget.ExePath
+if ($LaunchAfterFix -and $launchTarget) {
+    Start-AllLaunchers -LaunchTarget $launchTarget
+}
+elseif ($LaunchAfterFix) {
+    Start-AllLaunchers -LaunchTarget $null
 }
 
 exit 0
