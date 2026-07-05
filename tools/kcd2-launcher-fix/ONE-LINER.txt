@@ -1,0 +1,17 @@
+@echo off
+:: Вставьте содержимое этого файла в Win+R -> powershell -> Enter
+:: Или: ПКМ по Пуск -> Терминал (Windows) -> вставьте команду из ONE-LINER.txt
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+"Write-Host 'Обновление лаунчеров...' -ForegroundColor Cyan; ^
+winget upgrade --id Valve.Steam -e --accept-package-agreements --accept-source-agreements 2^>^$null; ^
+winget upgrade --id EpicGames.EpicGamesLauncher -e --accept-package-agreements --accept-source-agreements 2^>^$null; ^
+$shader=Join-Path $env:USERPROFILE 'Saved Games\kingdomcome2\shaders'; ^
+if(Test-Path $shader){Remove-Item $shader -Recurse -Force}; ^
+$steam=\"${env:ProgramFiles(x86)}\Steam\steam.exe\"; ^
+if(-not(Test-Path $steam)){$steam=\"$env:ProgramFiles\Steam\steam.exe\"}; ^
+if(Test-Path $steam){Start-Process $steam; Start-Sleep 5; Start-Process $steam -ArgumentList 'steam://validate/1771300'; Start-Sleep 2; Start-Process $steam -ArgumentList 'steam://rungameid/1771300'; Write-Host 'Steam: игра запускается' -ForegroundColor Green; exit}; ^
+$epic=\"${env:ProgramFiles(x86)}\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe\"; ^
+if(-not(Test-Path $epic)){$epic=\"$env:ProgramFiles\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe\"}; ^
+if(Test-Path $epic){Start-Process $epic; Start-Sleep 6; Start-Process 'com.epicgames.launcher://apps/KingdomComeDeliverance2?action=launch'; Write-Host 'Epic: игра запускается' -ForegroundColor Green; exit}; ^
+Write-Host 'Установите Steam или Epic Games' -ForegroundColor Red"
