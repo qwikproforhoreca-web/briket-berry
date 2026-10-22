@@ -7,6 +7,7 @@ import {
   LEGAL_BIK,
   LEGAL_EMAIL,
   LEGAL_ENTITY_NAME,
+  LEGAL_ENTITY_SHORT,
   LEGAL_INN,
   LEGAL_KS,
   LEGAL_OGRNIP,
@@ -23,7 +24,7 @@ export default function ContactsPage() {
         <title>Контакты Брикет-Бери | Поставки по России</title>
         <meta
           name="description"
-          content="Контакты и реквизиты продавца: ИП Бессонов Александр Владимирович. Договор заключается с ИП Бессонов А.В."
+          content={`Контакты и реквизиты продавца: ${LEGAL_ENTITY_SHORT}. Договор заключается с ${LEGAL_ENTITY_SHORT}.`}
         />
         <meta name="robots" content="index,follow" />
         <link rel="canonical" href={siteUrl('/contacts')} />
@@ -81,7 +82,7 @@ export default function ContactsPage() {
               <p><span className="text-white/40">Банк:</span> {LEGAL_BANK}</p>
               <p><span className="text-white/40">БИК:</span> {LEGAL_BIK}</p>
               <p><span className="text-white/40">К/с:</span> {LEGAL_KS}</p>
-              <p><span className="text-white/40">Р/с:</span> {LEGAL_RS}</p>
+              {LEGAL_RS ? <p><span className="text-white/40">Р/с:</span> {LEGAL_RS}</p> : null}
             </div>
           </div>
 
@@ -91,7 +92,7 @@ export default function ContactsPage() {
               Подготовим предложение с ценой, сроками поставки и расчетом объема под ваш формат кухни.
             </p>
             <p className="text-white/60 text-sm mb-4">
-              Договор заключается с ИП Бессонов Александр Владимирович. Претензии по качеству товара
+              Договор заключается с {LEGAL_ENTITY_SHORT}. Претензии по качеству товара
               принимаются по адресу электронной почты{' '}
               <a href={`mailto:${LEGAL_EMAIL}`} className="text-brand-orange hover:underline">{LEGAL_EMAIL}</a>{' '}
               и по телефону{' '}

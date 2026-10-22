@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async'
-import { LEGAL_EMAIL, LEGAL_ENTITY_NAME } from '@/constants/legal'
+import { LEGAL_EMAIL, LEGAL_ENTITY_NAME, LEGAL_ENTITY_SHORT } from '@/constants/legal'
 import { siteUrl } from '@/constants/site'
 
 export default function ConsentPage() {
@@ -21,7 +21,7 @@ export default function ConsentPage() {
             Согласие на обработку персональных данных
           </h1>
           <p className="text-white/40 text-sm mb-10">
-            Последнее обновление: 30 апреля 2026 г.
+            Последнее обновление: 22 октября 2026 г.
           </p>
 
           <div className="space-y-6 text-white/65 text-sm leading-relaxed">
@@ -35,7 +35,7 @@ export default function ConsentPage() {
               коммерческого предложения, исполнение договора поставки, а также соблюдение требований
               законодательства Российской Федерации.
             </p>
-            <p>Договор заключается с ИП Бессонов Александр Владимирович.</p>
+            <p>Договор заключается с {LEGAL_ENTITY_SHORT}.</p>
             <p>Претензии по качеству товара принимаются по адресу электронной почты {LEGAL_EMAIL}.</p>
             <p>
               Перечень обрабатываемых данных: имя, номер телефона, адрес электронной почты, название
