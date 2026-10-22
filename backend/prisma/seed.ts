@@ -174,7 +174,7 @@ async function main() {
     { key: 'site.whatsapp', value: '+79283200870', type: 'STRING', label: 'WhatsApp', group: 'general' },
     { key: 'site.telegram', value: '@briket_beri', type: 'STRING', label: 'Telegram', group: 'general' },
     { key: 'site.email', value: 'ElizavetaB@briket-berry.ru', type: 'STRING', label: 'Email', group: 'general' },
-    { key: 'site.address', value: '355047, Ставропольский край, г. Ставрополь, ул. Октябрьская, д. 192/1, кв. 108', type: 'STRING', label: 'Адрес / Часы работы', group: 'general' },
+    { key: 'site.address', value: '355047, Ставропольский край, город Ставрополь г.о., г. Ставрополь, ул. Октябрьская, д. 192/1, кв. 108', type: 'STRING', label: 'Адрес / Часы работы', group: 'general' },
     { key: 'site.workingHours', value: 'Пн–Пт: 10:00 – 18:00', type: 'STRING', label: 'Часы работы', group: 'general' },
     { key: 'hero.videoUrl', value: '/videos/charcoal-bg.mp4', type: 'URL', label: 'Фоновое видео', group: 'video' },
     { key: 'tutorial.videoUrl', value: '/videos/tutorial.mp4', type: 'URL', label: 'Видео-инструкция', group: 'video' },
