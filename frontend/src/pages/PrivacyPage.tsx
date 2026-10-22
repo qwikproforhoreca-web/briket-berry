@@ -3,6 +3,7 @@ import {
   LEGAL_ADDRESS,
   LEGAL_EMAIL,
   LEGAL_ENTITY_NAME,
+  LEGAL_ENTITY_SHORT,
   LEGAL_INN,
   LEGAL_OGRNIP,
   LEGAL_PHONE,
@@ -25,7 +26,7 @@ export default function PrivacyPage() {
             Политика конфиденциальности
           </h1>
           <p className="text-white/40 text-sm mb-10">
-            Последнее обновление: 1 апреля 2026 г.
+            Последнее обновление: 22 октября 2026 г.
           </p>
 
           <div className="space-y-8 text-white/60 text-sm leading-relaxed">
@@ -80,7 +81,7 @@ export default function PrivacyPage() {
                 Обработка персональных данных осуществляется на основании Федерального закона
                 от 27.07.2006 № 152-ФЗ «О персональных данных», а также на основании согласия
                 субъекта персональных данных и в целях исполнения договора купли-продажи.
-                Договор заключается с ИП Бессонов Александр Владимирович.
+                Договор заключается с {LEGAL_ENTITY_SHORT}.
               </p>
             </section>
 

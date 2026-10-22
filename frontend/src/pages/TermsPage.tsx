@@ -5,6 +5,7 @@ import {
   LEGAL_BIK,
   LEGAL_EMAIL,
   LEGAL_ENTITY_NAME,
+  LEGAL_ENTITY_SHORT,
   LEGAL_INN,
   LEGAL_KS,
   LEGAL_OGRNIP,
@@ -29,7 +30,7 @@ export default function TermsPage() {
             Пользовательское соглашение
           </h1>
           <p className="text-white/40 text-sm mb-10">
-            Последнее обновление: 1 апреля 2026 г.
+            Последнее обновление: 22 октября 2026 г.
           </p>
 
           <div className="space-y-8 text-white/60 text-sm leading-relaxed">
@@ -46,7 +47,7 @@ export default function TermsPage() {
                 настоящего Соглашения в полном объёме.
               </p>
               <p className="mt-3">
-                Договор заключается с ИП Бессонов Александр Владимирович.
+                Договор заключается с {LEGAL_ENTITY_SHORT}.
               </p>
             </section>
 
@@ -202,7 +203,7 @@ export default function TermsPage() {
               <p>Банк: {LEGAL_BANK}</p>
               <p>БИК: {LEGAL_BIK}</p>
               <p>К/с: {LEGAL_KS}</p>
-              <p>Р/с: {LEGAL_RS}</p>
+              {LEGAL_RS ? <p>Р/с: {LEGAL_RS}</p> : null}
             </section>
           </div>
         </div>
